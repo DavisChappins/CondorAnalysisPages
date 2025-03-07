@@ -160,7 +160,7 @@ function renderGroupedFiles(fileNames, currentPath) {
             const img = document.createElement('img');
             img.src = fileUrl;
             img.alt = fileName;
-            img.style.maxWidth = '300px';
+            //img.style.maxWidth = '300px';
             li.appendChild(img);
           }
         } else if (groupName === "Images") {
