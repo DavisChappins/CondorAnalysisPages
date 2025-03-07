@@ -14,12 +14,16 @@
     
     // Function to fetch the list of keys from the KV store.
     async function fetchFileList() {
-      // We'll assume your Worker supports a listing endpoint when '?list=1' is added.
-      const response = await fetch(workerUrl + '?list=1');
-      if (response.ok) {
-        return await response.json();
-      } else {
-        console.error('Error fetching file list:', response.status);
+      try {
+        const response = await fetch(workerUrl + '?list=1');
+        if (response.ok) {
+          return await response.json();
+        } else {
+          console.error('Error fetching file list:', response.status);
+          return null;
+        }
+      } catch (error) {
+        console.error('Fetch error:', error);
         return null;
       }
     }
