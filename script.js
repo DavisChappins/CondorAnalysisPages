@@ -52,6 +52,177 @@ function getSubtree(tree, pathParts) {
   return subtree;
 }
 
+// Group files into custom categories based on file name patterns.
+function groupFiles(fileNames) {
+  const groups = {
+    "Summary xlsx": [],
+    "Thermal & Glide html": [],
+    "Download IGCs": [],
+    "Simplified Summaries": []
+  };
+
+  fileNames.forEach(fileName => {
+    const lowerName = fileName.toLowerCase();
+    if (lowerName.endsWith('.xlsx')) {
+      groups["Summary xlsx"].push(fileName);
+    } else if (lowerName.endsWith('.html')) {
+      // Group specific HTML files together
+      if (lowerName.includes('summaryclimb_interactive') || lowerName.includes('groundspeed_vs_percent_time_spent')) {
+        groups["Thermal & Glide html"].push(fileName);
+      }
+    } else if (lowerName.endsWith('.zip')) {
+      groups["Download IGCs"].push(fileName);
+    } else if (lowerName.endsWith('.csv')) {
+      if (lowerName.includes('slim_summary')) {
+        groups["Simplified Summaries"].push(fileName);
+      }
+    }
+  });
+  return groups;
+}
+
+// Render a group of files under a heading.
+function renderGroupedFiles(fileNames, currentPath) {
+  const groups = groupFiles(fileNames);
+  const container = document.createElement('div');
+
+  Object.keys(groups).forEach(groupName => {
+    if (groups[groupName].length > 0) {
+      // Heading for the group.
+      const heading = document.createElement('h2');
+      heading.textContent = groupName;
+      container.appendChild(heading);
+
+      const ul = document.createElement('ul');
+      groups[groupName].forEach(fileName => {
+        const li = document.createElement('li');
+        const fullPath = currentPath ? `${currentPath}/${fileName}` : fileName;
+        const link = document.createElement('a');
+        link.href = '#';
+        link.textContent = fileName;
+        link.addEventListener('click', async (e) => {
+          e.preventDefault();
+          const lowerName = fileName.toLowerCase();
+          const fileUrl = workerUrl + '?file=' + encodeURIComponent(fullPath);
+
+          if (lowerName.endsWith('.html')) {
+            window.open(fileUrl, '_blank');
+          } else if (lowerName.endsWith('.csv') || lowerName.endsWith('.xlsx') || lowerName.endsWith('.zip')) {
+            try {
+              const fileResponse = await fetch(fileUrl);
+              if (fileResponse.ok) {
+                const blob = await fileResponse.blob();
+                const downloadUrl = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = downloadUrl;
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                URL.revokeObjectURL(downloadUrl);
+              } else {
+                console.error('Error downloading file:', fileResponse.status);
+              }
+            } catch (err) {
+              console.error('Fetch error:', err);
+            }
+          } else {
+            try {
+              const fileResponse = await fetch(fileUrl);
+              if (fileResponse.ok) {
+                const content = await fileResponse.text();
+                document.getElementById('file-content').innerText = content;
+              } else {
+                document.getElementById('file-content').innerText = 'Error loading file.';
+              }
+            } catch (err) {
+              console.error('Fetch error:', err);
+            }
+          }
+        });
+        li.appendChild(link);
+        ul.appendChild(li);
+      });
+      container.appendChild(ul);
+    }
+  });
+  return container;
+}
+
+// Render the current folder's contents.
+function renderTreeView(subtree, currentPath) {
+  const fileListElement = document.getElementById('file-list');
+  fileListElement.innerHTML = '';
+
+  // If subtree has only files (i.e. all keys have value null), group them.
+  const keys = Object.keys(subtree);
+  const onlyFiles = keys.every(key => subtree[key] === null);
+
+  if (onlyFiles) {
+    const groupedContainer = renderGroupedFiles(keys, currentPath);
+    fileListElement.appendChild(groupedContainer);
+  } else {
+    // Otherwise, render folders and files in a simple list.
+    Object.keys(subtree).forEach(key => {
+      const li = document.createElement('li');
+      const fullPath = currentPath ? `${currentPath}/${key}` : key;
+      if (subtree[key] === null) {
+        // File: create a clickable link.
+        const link = document.createElement('a');
+        link.href = '#';
+        link.textContent = key;
+        link.addEventListener('click', async (e) => {
+          e.preventDefault();
+          const lowerName = key.toLowerCase();
+          const fileUrl = workerUrl + '?file=' + encodeURIComponent(fullPath);
+          if (lowerName.endsWith('.html')) {
+            window.open(fileUrl, '_blank');
+          } else if (lowerName.endsWith('.csv') || lowerName.endsWith('.xlsx') || lowerName.endsWith('.zip')) {
+            try {
+              const fileResponse = await fetch(fileUrl);
+              if (fileResponse.ok) {
+                const blob = await fileResponse.blob();
+                const downloadUrl = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = downloadUrl;
+                a.download = key;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                URL.revokeObjectURL(downloadUrl);
+              } else {
+                console.error('Error downloading file:', fileResponse.status);
+              }
+            } catch (err) {
+              console.error('Fetch error:', err);
+            }
+          } else {
+            try {
+              const fileResponse = await fetch(fileUrl);
+              if (fileResponse.ok) {
+                const content = await fileResponse.text();
+                document.getElementById('file-content').innerText = content;
+              } else {
+                document.getElementById('file-content').innerText = 'Error loading file.';
+              }
+            } catch (err) {
+              console.error('Fetch error:', err);
+            }
+          }
+        });
+        li.appendChild(link);
+      } else {
+        // Folder: create a link that navigates to that folder.
+        const link = document.createElement('a');
+        link.href = '/' + fullPath;
+        link.textContent = key;
+        li.appendChild(link);
+      }
+      fileListElement.appendChild(li);
+    });
+  }
+}
+
 // Render breadcrumb navigation.
 function renderNavigation(currentPathParts) {
   const nav = document.getElementById('navigation');
@@ -63,7 +234,6 @@ function renderNavigation(currentPathParts) {
   homeLink.textContent = 'Home';
   nav.appendChild(homeLink);
 
-  // For each folder in the path, create a link.
   let pathSoFar = '';
   currentPathParts.forEach((part, index) => {
     nav.appendChild(document.createTextNode(' / '));
@@ -75,79 +245,6 @@ function renderNavigation(currentPathParts) {
   });
 }
 
-// Render the current folder's contents (files and subfolders).
-function renderTreeView(subtree, currentPath) {
-  const fileListElement = document.getElementById('file-list');
-  fileListElement.innerHTML = '';
-
-  if (Object.keys(subtree).length === 0) {
-    fileListElement.innerHTML = '<li>No items in this folder.</li>';
-    return;
-  }
-
-  Object.keys(subtree).forEach(key => {
-    const li = document.createElement('li');
-    // Build the full path: if currentPath is empty, fullPath is key; otherwise join.
-    const fullPath = currentPath ? `${currentPath}/${key}` : key;
-
-    if (subtree[key] === null) {
-      // This is a file.
-      const link = document.createElement('a');
-      link.href = '#';
-      link.textContent = key;
-      link.addEventListener('click', async (e) => {
-        e.preventDefault();
-        const lowerName = key.toLowerCase();
-        const fileUrl = workerUrl + '?file=' + encodeURIComponent(fullPath);
-
-        if (lowerName.endsWith('.html')) {
-          window.open(fileUrl, '_blank');
-        } else if (lowerName.endsWith('.csv') || lowerName.endsWith('.xlsx') || lowerName.endsWith('.zip')) {
-          try {
-            const fileResponse = await fetch(fileUrl);
-            if (fileResponse.ok) {
-              const blob = await fileResponse.blob();
-              const downloadUrl = URL.createObjectURL(blob);
-              const a = document.createElement('a');
-              a.href = downloadUrl;
-              a.download = key;
-              document.body.appendChild(a);
-              a.click();
-              a.remove();
-              URL.revokeObjectURL(downloadUrl);
-            } else {
-              console.error('Error downloading file:', fileResponse.status);
-            }
-          } catch (err) {
-            console.error('Fetch error:', err);
-          }
-        } else {
-          try {
-            const fileResponse = await fetch(fileUrl);
-            if (fileResponse.ok) {
-              const content = await fileResponse.text();
-              document.getElementById('file-content').innerText = content;
-            } else {
-              document.getElementById('file-content').innerText = 'Error loading file.';
-            }
-          } catch (err) {
-            console.error('Fetch error:', err);
-          }
-        }
-      });
-      li.appendChild(link);
-    } else {
-      // This is a folder: make it a clickable link that navigates to that folder.
-      const link = document.createElement('a');
-      // Note: using relative link so that Cloudflare Pages handles navigation.
-      link.href = '/' + fullPath;
-      link.textContent = key;
-      li.appendChild(link);
-    }
-    fileListElement.appendChild(li);
-  });
-}
-
 // Main function: fetch keys, build tree, and render the view based on URL.
 async function renderFileTree() {
   const listData = await fetchFileList();
@@ -155,23 +252,19 @@ async function renderFileTree() {
     const tree = buildFileTree(listData.keys);
     console.log('Full Tree:', tree);
 
-    // Get current path from URL (without query string)
+    // Get current path from URL (remove leading slash)
     let currentPath = window.location.pathname;
     if (currentPath.startsWith('/')) {
-      currentPath = currentPath.substring(1); // remove leading '/'
+      currentPath = currentPath.substring(1);
     }
     const currentPathParts = currentPath ? currentPath.split('/') : [];
-
     console.log('Current Path Parts:', currentPathParts);
 
-    // Render breadcrumbs.
     renderNavigation(currentPathParts);
 
-    // Get subtree for the current path.
     const subtree = getSubtree(tree, currentPathParts);
     console.log('Subtree for current path:', subtree);
 
-    // Render the list of files/folders.
     renderTreeView(subtree, currentPath);
   } else {
     document.getElementById('file-list').innerHTML = '<li>No files found.</li>';
