@@ -3,13 +3,31 @@
 <head>
   <meta charset="utf-8">
   <title>Analysis Files</title>
+  <style>
+    /* Simple styling for navigation */
+    #navigation a {
+      text-decoration: none;
+      margin: 0 5px;
+      color: blue;
+    }
+    #navigation a:hover {
+      text-decoration: underline;
+    }
+    /* Indent folder items */
+    #file-list li {
+      list-style-type: none;
+      margin-left: 20px;
+    }
+  </style>
 </head>
 <body>
   <h1>Analysis Files</h1>
-  <!-- This list will be populated with a nested folder structure -->
+  <!-- Breadcrumb navigation container -->
+  <div id="navigation"></div>
+  <!-- This will hold our file/folder list -->
   <ul id="file-list"></ul>
+  <!-- Optionally, a container for file content (if needed) -->
   <div id="file-content"></div>
-  <!-- Link to your external JavaScript -->
   <script src="script.js"></script>
 </body>
 </html>
