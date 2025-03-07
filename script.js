@@ -24,7 +24,6 @@ function buildFileTree(keys) {
     const parts = item.name.split('/'); // split on '/'
     let current = tree;
     parts.forEach((part, index) => {
-      // If this is the last part, it's a file.
       if (index === parts.length - 1) {
         current[part] = null;
       } else {
@@ -45,13 +44,67 @@ function getSubtree(tree, pathParts) {
     if (subtree[part] !== undefined) {
       subtree = subtree[part];
     } else {
-      // If path doesn't exist, return an empty object.
       return {};
     }
   }
   return subtree;
 }
 
+// Group files into custom categories, adding a new "Condor Club" group.
+function groupFiles(fileNames) {
+  const groups = {
+    "Summary xlsx": [],
+    "Thermal & Glide html": [],
+    "Download IGCs": [],
+    "Simplified Summaries": [],
+    "Condor Club": [],
+    "Images": [],
+    "Other": []
+  };
+
+  fileNames.forEach(fileName => {
+    if (typeof fileName !== 'string' || fileName.trim() === '') {
+      console.error('Invalid file name:', fileName);
+      return;
+    }
+    
+    const lowerName = fileName.toLowerCase();
+    let grouped = false;
+    
+    // New rule for "Condor Club": if it's a TXT file and contains "Competition_day_" OR ends with _task_image.jpg.
+    if ((lowerName.endsWith('.txt') && fileName.indexOf('Competition_day_') !== -1) ||
+        (lowerName.endsWith('_task_image.jpg'))) {
+      groups["Condor Club"].push(fileName);
+      grouped = true;
+    } else if (lowerName.endsWith('.xlsx')) {
+      groups["Summary xlsx"].push(fileName);
+      grouped = true;
+    } else if (lowerName.endsWith('.html')) {
+      if (lowerName.includes('summaryclimb_interactive') || lowerName.includes('groundspeed_vs_percent_time_spent')) {
+        groups["Thermal & Glide html"].push(fileName);
+        grouped = true;
+      }
+    } else if (lowerName.endsWith('.zip')) {
+      groups["Download IGCs"].push(fileName);
+      grouped = true;
+    } else if (lowerName.endsWith('.csv')) {
+      if (lowerName.includes('slim_summary')) {
+        groups["Simplified Summaries"].push(fileName);
+        grouped = true;
+      }
+    } else if (lowerName.endsWith('.jpg') || lowerName.endsWith('.jpeg') || lowerName.endsWith('.png')) {
+      groups["Images"].push(fileName);
+      grouped = true;
+    }
+    
+    if (!grouped) {
+      groups["Other"].push(fileName);
+    }
+  });
+  return groups;
+}
+
+// Render a group of files under a heading.
 function renderGroupedFiles(fileNames, currentPath) {
   const groups = groupFiles(fileNames);
   const container = document.createElement('div');
@@ -69,7 +122,6 @@ function renderGroupedFiles(fileNames, currentPath) {
   
   groupOrder.forEach(groupName => {
     if (groups[groupName] && groups[groupName].length > 0) {
-      // Use an <h3> heading for the group.
       const heading = document.createElement('h3');
       heading.textContent = groupName;
       container.appendChild(heading);
@@ -83,7 +135,7 @@ function renderGroupedFiles(fileNames, currentPath) {
   
         if (groupName === "Condor Club") {
           if (lowerName.endsWith('.txt')) {
-            // Create a link labeled "Race Results" for the TXT file.
+            // Render TXT file as a link labeled "Race Results"
             const link = document.createElement('a');
             link.href = '#';
             link.textContent = "Race Results";
@@ -104,7 +156,7 @@ function renderGroupedFiles(fileNames, currentPath) {
             });
             li.appendChild(link);
           } else if (lowerName.endsWith('_task_image.jpg')) {
-            // Render the image inline.
+            // Render the task image inline.
             const img = document.createElement('img');
             img.src = fileUrl;
             img.alt = fileName;
@@ -112,20 +164,19 @@ function renderGroupedFiles(fileNames, currentPath) {
             li.appendChild(img);
           }
         } else if (groupName === "Images") {
-          // Render images inline for the "Images" group.
+          // Render images inline.
           const img = document.createElement('img');
           img.src = fileUrl;
           img.alt = fileName;
           img.style.maxWidth = '300px';
           li.appendChild(img);
         } else {
-          // For other groups, create a clickable link.
+          // Default: render a clickable link.
           const link = document.createElement('a');
           link.href = '#';
           link.textContent = fileName;
           link.addEventListener('click', async (e) => {
             e.preventDefault();
-            const lowerName = fileName.toLowerCase();
             if (lowerName.endsWith('.html')) {
               window.open(fileUrl, '_blank');
             } else if (lowerName.endsWith('.csv') || lowerName.endsWith('.xlsx') || lowerName.endsWith('.zip')) {
@@ -171,14 +222,10 @@ function renderGroupedFiles(fileNames, currentPath) {
   return container;
 }
 
-
-
 // Render the current folder's contents.
 function renderTreeView(subtree, currentPath) {
   const fileListElement = document.getElementById('file-list');
   fileListElement.innerHTML = '';
-
-  // If subtree has only files (i.e. all keys have value null), group them.
   const keys = Object.keys(subtree);
   const onlyFiles = keys.every(key => subtree[key] === null);
 
@@ -186,19 +233,17 @@ function renderTreeView(subtree, currentPath) {
     const groupedContainer = renderGroupedFiles(keys, currentPath);
     fileListElement.appendChild(groupedContainer);
   } else {
-    // Otherwise, render folders and files in a simple list.
     Object.keys(subtree).forEach(key => {
       const li = document.createElement('li');
       const fullPath = currentPath ? `${currentPath}/${key}` : key;
       if (subtree[key] === null) {
-        // File: create a clickable link.
         const link = document.createElement('a');
         link.href = '#';
         link.textContent = key;
         link.addEventListener('click', async (e) => {
           e.preventDefault();
-          const lowerName = key.toLowerCase();
           const fileUrl = workerUrl + '?file=' + encodeURIComponent(fullPath);
+          const lowerName = key.toLowerCase();
           if (lowerName.endsWith('.html')) {
             window.open(fileUrl, '_blank');
           } else if (lowerName.endsWith('.csv') || lowerName.endsWith('.xlsx') || lowerName.endsWith('.zip')) {
@@ -236,7 +281,6 @@ function renderTreeView(subtree, currentPath) {
         });
         li.appendChild(link);
       } else {
-        // Folder: create a link that navigates to that folder.
         const link = document.createElement('a');
         link.href = '/' + fullPath;
         link.textContent = key;
@@ -251,13 +295,10 @@ function renderTreeView(subtree, currentPath) {
 function renderNavigation(currentPathParts) {
   const nav = document.getElementById('navigation');
   nav.innerHTML = '';
-
-  // "Home" link (go to root)
   const homeLink = document.createElement('a');
   homeLink.href = '/';
   homeLink.textContent = 'Home';
   nav.appendChild(homeLink);
-
   let pathSoFar = '';
   currentPathParts.forEach((part, index) => {
     nav.appendChild(document.createTextNode(' / '));
@@ -269,26 +310,21 @@ function renderNavigation(currentPathParts) {
   });
 }
 
-// Main function: fetch keys, build tree, and render the view based on URL.
+// Main function: fetch keys, build tree, and render view based on URL.
 async function renderFileTree() {
   const listData = await fetchFileList();
   if (listData && listData.keys) {
     const tree = buildFileTree(listData.keys);
     console.log('Full Tree:', tree);
-
-    // Get current path from URL (remove leading slash)
     let currentPath = window.location.pathname;
     if (currentPath.startsWith('/')) {
       currentPath = currentPath.substring(1);
     }
     const currentPathParts = currentPath ? currentPath.split('/') : [];
     console.log('Current Path Parts:', currentPathParts);
-
     renderNavigation(currentPathParts);
-
     const subtree = getSubtree(tree, currentPathParts);
     console.log('Subtree for current path:', subtree);
-
     renderTreeView(subtree, currentPath);
   } else {
     document.getElementById('file-list').innerHTML = '<li>No files found.</li>';
