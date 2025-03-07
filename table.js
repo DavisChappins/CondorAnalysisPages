@@ -28,14 +28,14 @@ export function styleTable(htmlString) {
       innerDiv.style.transform = 'rotate(-45deg)';
       innerDiv.style.transformOrigin = 'bottom left';
       // Adjust padding inside the rotated container to control spacing.
-      innerDiv.style.padding = '2px';
+      innerDiv.style.padding = '1px';
       
       // Clear the cell and insert the rotated wrapper.
       cell.innerHTML = '';
       cell.appendChild(innerDiv);
       
       // Adjust the cell's own styling.
-      cell.style.padding = '2px 8px';   // Adjust vertical/horizontal padding as needed.
+      cell.style.padding = '1px 3px';   // Adjust vertical/horizontal padding as needed.
       cell.style.textAlign = 'center';
       cell.style.verticalAlign = 'bottom';
       cell.style.border = '1px solid #dee2e6';
