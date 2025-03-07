@@ -171,6 +171,7 @@ function renderGroupedFiles(fileNames, currentPath) {
                   const firstSheetName = workbook.SheetNames[0];
                   const worksheet = workbook.Sheets[firstSheetName];
                   let htmlString = XLSX.utils.sheet_to_html(worksheet);
+                  console.log("Generated HTML:", htmlString); // Debug log
                   // Apply table styling using our helper function.
                   htmlString = styleTable(htmlString);
                   tableContainer.innerHTML = htmlString;
