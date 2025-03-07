@@ -142,18 +142,39 @@ function renderGroupedFiles(fileNames, currentPath) {
           // Create a container for both the download link and collapsible preview.
           const fileContainer = document.createElement('div');
   
-          // Create a download link.
+          // Create a download link using blob-download technique to preserve filename.
           const downloadLink = document.createElement('a');
-          downloadLink.href = fileUrl;
-          downloadLink.download = fileName;
+          downloadLink.href = "#";
           downloadLink.textContent = "Download " + fileName;
           downloadLink.style.marginRight = "10px";
+          downloadLink.addEventListener('click', async function(e) {
+            e.preventDefault();
+            try {
+              const fileResponse = await fetch(fileUrl);
+              if (fileResponse.ok) {
+                const blob = await fileResponse.blob();
+                const downloadUrl = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = downloadUrl;
+                a.download = fileName; // Ensure the filename is used
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                URL.revokeObjectURL(downloadUrl);
+              } else {
+                console.error('Error downloading file:', fileResponse.status);
+              }
+            } catch (err) {
+              console.error('Fetch error:', err);
+            }
+          });
           fileContainer.appendChild(downloadLink);
   
           // Create a collapsible container using <details>.
           const details = document.createElement('details');
           const summaryEl = document.createElement('summary');
-          summaryEl.textContent = "Show Table Preview";
+          // Change text from "Show Table Preview" to "See Table"
+          summaryEl.textContent = "See Table";
           details.appendChild(summaryEl);
   
           // Container for the parsed table.
@@ -171,7 +192,6 @@ function renderGroupedFiles(fileNames, currentPath) {
                   const firstSheetName = workbook.SheetNames[0];
                   const worksheet = workbook.Sheets[firstSheetName];
                   let htmlString = XLSX.utils.sheet_to_html(worksheet);
-                  console.log("Generated HTML:", htmlString); // Debug log
                   // Apply table styling using our helper function.
                   htmlString = styleTable(htmlString);
                   tableContainer.innerHTML = htmlString;
