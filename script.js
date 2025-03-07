@@ -55,9 +55,9 @@ function getSubtree(tree, pathParts) {
 // Group files into custom categories based on file name patterns.
 function groupFiles(fileNames) {
   const groups = {
-    "Summary xlsx": [],
+    "Summary": [],
     "Thermal & Glide html": [],
-    "Download IGCs": [],
+    "IGC Download": [],
     "Simplified Summaries": []
   };
 
