@@ -8,56 +8,7 @@
   <h1>Analysis Files</h1>
   <ul id="file-list"></ul>
   <div id="file-content"></div>
-  <script>
-    // Replace with your Worker URL
-    const workerUrl = 'https://condor-results-worker.davis-chappins.workers.dev/';
-    
-    // Function to fetch the list of keys from the KV store.
-    async function fetchFileList() {
-      try {
-        const response = await fetch(workerUrl + '?list=1');
-        if (response.ok) {
-          return await response.json();
-        } else {
-          console.error('Error fetching file list:', response.status);
-          return null;
-        }
-      } catch (error) {
-        console.error('Fetch error:', error);
-        return null;
-      }
-    }
-    
-    // Render the file list as clickable links.
-    async function renderFileList() {
-      const fileListElement = document.getElementById('file-list');
-      const listData = await fetchFileList();
-      if (listData && listData.keys) {
-        listData.keys.forEach(item => {
-          const li = document.createElement('li');
-          const link = document.createElement('a');
-          link.href = '#';
-          link.textContent = item.name;
-          link.addEventListener('click', async (e) => {
-            e.preventDefault();
-            // Fetch file content when the link is clicked
-            const fileResponse = await fetch(workerUrl + '?file=' + encodeURIComponent(item.name));
-            if (fileResponse.ok) {
-              const content = await fileResponse.text();
-              document.getElementById('file-content').innerText = content;
-            } else {
-              document.getElementById('file-content').innerText = 'Error loading file.';
-            }
-          });
-          li.appendChild(link);
-          fileListElement.appendChild(li);
-        });
-      } else {
-        fileListElement.innerHTML = '<li>No files found.</li>';
-      }
-    }
-    
-    renderFileList();
-  </script>
+  <!-- Include external JavaScript file -->
+  <script src="script.js"></script>
 </body>
 </html>
