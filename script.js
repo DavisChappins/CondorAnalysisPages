@@ -54,32 +54,51 @@ function getSubtree(tree, pathParts) {
 
 // Group files into custom categories based on file name patterns.
 function groupFiles(fileNames) {
+  // Define your groups, including an "Other" group for files that don't match.
   const groups = {
-    "Summary": [],
+    "Summary xlsx": [],
     "Thermal & Glide html": [],
-    "IGC Download": [],
-    "Simplified Summaries": []
+    "Download IGCs": [],
+    "Simplified Summaries": [],
+    "Other": []
   };
 
   fileNames.forEach(fileName => {
+    if (typeof fileName !== 'string' || fileName.trim() === '') {
+      console.error('Invalid file name:', fileName);
+      return;
+    }
+    
     const lowerName = fileName.toLowerCase();
+    let grouped = false;
+
     if (lowerName.endsWith('.xlsx')) {
       groups["Summary xlsx"].push(fileName);
+      grouped = true;
     } else if (lowerName.endsWith('.html')) {
-      // Group specific HTML files together
+      // Only group specific HTML files into "Thermal & Glide html"
       if (lowerName.includes('summaryclimb_interactive') || lowerName.includes('groundspeed_vs_percent_time_spent')) {
         groups["Thermal & Glide html"].push(fileName);
+        grouped = true;
       }
     } else if (lowerName.endsWith('.zip')) {
       groups["Download IGCs"].push(fileName);
+      grouped = true;
     } else if (lowerName.endsWith('.csv')) {
       if (lowerName.includes('slim_summary')) {
         groups["Simplified Summaries"].push(fileName);
+        grouped = true;
       }
+    }
+    
+    // If the file didn't match any condition, put it into "Other"
+    if (!grouped) {
+      groups["Other"].push(fileName);
     }
   });
   return groups;
 }
+
 
 // Render a group of files under a heading.
 function renderGroupedFiles(fileNames, currentPath) {
