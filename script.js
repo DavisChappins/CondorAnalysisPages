@@ -71,7 +71,7 @@ function groupFiles(fileNames) {
     const lowerName = fileName.toLowerCase();
     let grouped = false;
     
-    // New rule for "Condor Club": if it's a TXT file and contains "Competition_day_" OR ends with _task_image.jpg.
+    // New rule for "Condor Club"
     if ((lowerName.endsWith('.txt') && fileName.indexOf('Competition_day_') !== -1) ||
         (lowerName.endsWith('_task_image.jpg'))) {
       groups["Condor Club"].push(fileName);
@@ -135,7 +135,7 @@ function renderGroupedFiles(fileNames, currentPath) {
   
         if (groupName === "Condor Club") {
           if (lowerName.endsWith('.txt')) {
-            // Render TXT file as a link labeled "Race Results"
+            // Render TXT file as a link labeled "Race Results" that opens in a new window.
             const link = document.createElement('a');
             link.href = '#';
             link.textContent = "Race Results";
@@ -145,8 +145,7 @@ function renderGroupedFiles(fileNames, currentPath) {
                 const response = await fetch(fileUrl);
                 if (response.ok) {
                   const resultUrl = await response.text();
-                  // Navigate to the URL contained in the text file.
-                  window.location.href = resultUrl;
+                  window.open(resultUrl, '_blank');
                 } else {
                   console.error('Error fetching text file:', response.status);
                 }
@@ -155,23 +154,22 @@ function renderGroupedFiles(fileNames, currentPath) {
               }
             });
             li.appendChild(link);
+            // Add a line break between the link and the image.
+            li.appendChild(document.createElement('br'));
           } else if (lowerName.endsWith('_task_image.jpg')) {
-            // Render the task image inline.
+            // Render the image inline at native size.
             const img = document.createElement('img');
             img.src = fileUrl;
             img.alt = fileName;
-            //img.style.maxWidth = '300px';
             li.appendChild(img);
           }
         } else if (groupName === "Images") {
-          // Render images inline.
           const img = document.createElement('img');
           img.src = fileUrl;
           img.alt = fileName;
-          img.style.maxWidth = '300px';
           li.appendChild(img);
         } else {
-          // Default: render a clickable link.
+          // Render default clickable link for other groups.
           const link = document.createElement('a');
           link.href = '#';
           link.textContent = fileName;
