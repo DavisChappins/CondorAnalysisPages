@@ -89,7 +89,7 @@ function renderGroupedFiles(fileNames, currentPath) {
   Object.keys(groups).forEach(groupName => {
     if (groups[groupName].length > 0) {
       // Heading for the group.
-      const heading = document.createElement('h2');
+      const heading = document.createElement('h3');
       heading.textContent = groupName;
       container.appendChild(heading);
 
