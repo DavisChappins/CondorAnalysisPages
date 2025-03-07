@@ -104,83 +104,6 @@ function groupFiles(fileNames) {
   return groups;
 }
 
-// Function to handle file clicks based on file type.
-async function handleFileClick(fileUrl, fileName) {
-  const lowerName = fileName.toLowerCase();
-  if (lowerName.endsWith('.html')) {
-    window.open(fileUrl, '_blank');
-  } else if (lowerName.endsWith('.zip') || lowerName.endsWith('.csv')) {
-    try {
-      const fileResponse = await fetch(fileUrl);
-      if (fileResponse.ok) {
-        const blob = await fileResponse.blob();
-        const downloadUrl = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = downloadUrl;
-        a.download = fileName;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        URL.revokeObjectURL(downloadUrl);
-      } else {
-        console.error('Error downloading file:', fileResponse.status);
-      }
-    } catch (err) {
-      console.error('Fetch error:', err);
-    }
-  } else if (lowerName.endsWith('.xlsx')) {
-    // Fetch, parse, and render the XLSX file using SheetJS and Tabulator.
-    try {
-      const response = await fetch(fileUrl);
-      if (response.ok) {
-        const arrayBuffer = await response.arrayBuffer();
-        const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-        const firstSheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[firstSheetName];
-        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-        const tableDiv = document.getElementById('xlsx-table');
-        tableDiv.innerHTML = ''; // Clear any previous table
-        if (jsonData.length > 0) {
-          const headers = jsonData[0];
-          const data = jsonData.slice(1).map(row => {
-            let obj = {};
-            headers.forEach((header, index) => {
-              obj[header] = row[index] || "";
-            });
-            return obj;
-          });
-          const columns = headers.map(header => ({ title: header, field: header }));
-          // Create a new Tabulator table
-          new Tabulator(tableDiv, {
-            data: data,
-            columns: columns,
-            layout: "fitData"
-          });
-        } else {
-          tableDiv.innerText = "No data in XLSX file";
-        }
-      } else {
-        console.error('Error fetching XLSX file:', response.status);
-      }
-    } catch (err) {
-      console.error('Error fetching XLSX file:', err);
-    }
-  } else {
-    // Default: fetch file content as text and display it.
-    try {
-      const fileResponse = await fetch(fileUrl);
-      if (fileResponse.ok) {
-        const content = await fileResponse.text();
-        document.getElementById('file-content').innerText = content;
-      } else {
-        document.getElementById('file-content').innerText = 'Error loading file.';
-      }
-    } catch (err) {
-      console.error('Fetch error:', err);
-    }
-  }
-}
-
 // Render a group of files under a heading.
 function renderGroupedFiles(fileNames, currentPath) {
   const groups = groupFiles(fileNames);
@@ -231,6 +154,7 @@ function renderGroupedFiles(fileNames, currentPath) {
               }
             });
             li.appendChild(link);
+            // Add a line break between the link and the image.
             li.appendChild(document.createElement('br'));
           } else if (lowerName.endsWith('_task_image.jpg')) {
             // Render the image inline at native size.
@@ -251,7 +175,40 @@ function renderGroupedFiles(fileNames, currentPath) {
           link.textContent = fileName;
           link.addEventListener('click', async (e) => {
             e.preventDefault();
-            await handleFileClick(fileUrl, fileName);
+            if (lowerName.endsWith('.html')) {
+              window.open(fileUrl, '_blank');
+            } else if (lowerName.endsWith('.csv') || lowerName.endsWith('.xlsx') || lowerName.endsWith('.zip')) {
+              try {
+                const fileResponse = await fetch(fileUrl);
+                if (fileResponse.ok) {
+                  const blob = await fileResponse.blob();
+                  const downloadUrl = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = downloadUrl;
+                  a.download = fileName;
+                  document.body.appendChild(a);
+                  a.click();
+                  a.remove();
+                  URL.revokeObjectURL(downloadUrl);
+                } else {
+                  console.error('Error downloading file:', fileResponse.status);
+                }
+              } catch (err) {
+                console.error('Fetch error:', err);
+              }
+            } else {
+              try {
+                const fileResponse = await fetch(fileUrl);
+                if (fileResponse.ok) {
+                  const content = await fileResponse.text();
+                  document.getElementById('file-content').innerText = content;
+                } else {
+                  document.getElementById('file-content').innerText = 'Error loading file.';
+                }
+              } catch (err) {
+                console.error('Fetch error:', err);
+              }
+            }
           });
           li.appendChild(link);
         }
@@ -284,7 +241,41 @@ function renderTreeView(subtree, currentPath) {
         link.addEventListener('click', async (e) => {
           e.preventDefault();
           const fileUrl = workerUrl + '?file=' + encodeURIComponent(fullPath);
-          await handleFileClick(fileUrl, key);
+          const lowerName = key.toLowerCase();
+          if (lowerName.endsWith('.html')) {
+            window.open(fileUrl, '_blank');
+          } else if (lowerName.endsWith('.csv') || lowerName.endsWith('.xlsx') || lowerName.endsWith('.zip')) {
+            try {
+              const fileResponse = await fetch(fileUrl);
+              if (fileResponse.ok) {
+                const blob = await fileResponse.blob();
+                const downloadUrl = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = downloadUrl;
+                a.download = key;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                URL.revokeObjectURL(downloadUrl);
+              } else {
+                console.error('Error downloading file:', fileResponse.status);
+              }
+            } catch (err) {
+              console.error('Fetch error:', err);
+            }
+          } else {
+            try {
+              const fileResponse = await fetch(fileUrl);
+              if (fileResponse.ok) {
+                const content = await fileResponse.text();
+                document.getElementById('file-content').innerText = content;
+              } else {
+                document.getElementById('file-content').innerText = 'Error loading file.';
+              }
+            } catch (err) {
+              console.error('Fetch error:', err);
+            }
+          }
         });
         li.appendChild(link);
       } else {
