@@ -127,13 +127,56 @@ function renderGroupedFiles(fileNames, currentPath) {
       container.appendChild(heading);
   
       const ul = document.createElement('ul');
+      
       groups[groupName].forEach(fileName => {
         const li = document.createElement('li');
         const fullPath = currentPath ? `${currentPath}/${fileName}` : fileName;
         const fileUrl = workerUrl + '?file=' + encodeURIComponent(fullPath);
         const lowerName = fileName.toLowerCase();
   
-        if (groupName === "Condor Club") {
+        // Special handling for "Summary xlsx"
+        if (groupName === "Summary xlsx") {
+          // Create a collapsible container using <details>
+          const details = document.createElement('details');
+          // Use a <summary> to display the file name or a custom label.
+          const summaryEl = document.createElement('summary');
+          summaryEl.textContent = fileName;
+          details.appendChild(summaryEl);
+  
+          // Create a container where the parsed table will be inserted.
+          const tableContainer = document.createElement('div');
+          details.appendChild(tableContainer);
+  
+          // Only fetch and parse when the details are opened
+          details.addEventListener('toggle', async function() {
+            if (details.open && !details.dataset.loaded) {
+              try {
+                const response = await fetch(fileUrl);
+                if (response.ok) {
+                  // Get the file as an ArrayBuffer
+                  const arrayBuffer = await response.arrayBuffer();
+                  // Read the XLSX file
+                  const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+                  // Get the first sheet name (or adjust if you want a specific sheet)
+                  const firstSheetName = workbook.SheetNames[0];
+                  const worksheet = workbook.Sheets[firstSheetName];
+                  // Convert the worksheet to HTML
+                  const htmlString = XLSX.utils.sheet_to_html(worksheet);
+                  tableContainer.innerHTML = htmlString;
+                  // Mark as loaded so that we don't re-fetch on subsequent toggles.
+                  details.dataset.loaded = "true";
+                } else {
+                  tableContainer.innerHTML = 'Error loading file: ' + response.status;
+                }
+              } catch (err) {
+                tableContainer.innerHTML = 'Fetch error: ' + err;
+              }
+            }
+          });
+          li.appendChild(details);
+  
+        } else if (groupName === "Condor Club") {
+          // Existing handling for "Condor Club"
           if (lowerName.endsWith('.txt')) {
             // Render TXT file as a link labeled "Race Results" that opens in a new window.
             const link = document.createElement('a');
@@ -154,10 +197,8 @@ function renderGroupedFiles(fileNames, currentPath) {
               }
             });
             li.appendChild(link);
-            // Add a line break between the link and the image.
             li.appendChild(document.createElement('br'));
           } else if (lowerName.endsWith('_task_image.jpg')) {
-            // Render the image inline at native size.
             const img = document.createElement('img');
             img.src = fileUrl;
             img.alt = fileName;
@@ -212,6 +253,7 @@ function renderGroupedFiles(fileNames, currentPath) {
           });
           li.appendChild(link);
         }
+  
         ul.appendChild(li);
       });
       container.appendChild(ul);
@@ -219,6 +261,7 @@ function renderGroupedFiles(fileNames, currentPath) {
   });
   return container;
 }
+
 
 // Render the current folder's contents.
 function renderTreeView(subtree, currentPath) {
