@@ -1,3 +1,6 @@
+// script.js
+import { styleTable } from './table.js';
+
 // Replace with your Worker URL
 const workerUrl = 'https://condor-results-worker.davis-chappins.workers.dev/';
 
@@ -149,41 +152,28 @@ function renderGroupedFiles(fileNames, currentPath) {
   
           // Create a collapsible container using <details>.
           const details = document.createElement('details');
-          // Create a summary element to label the collapsible section.
           const summaryEl = document.createElement('summary');
           summaryEl.textContent = "Show Table Preview";
           details.appendChild(summaryEl);
   
-          // Create a container where the parsed table will be inserted.
+          // Container for the parsed table.
           const tableContainer = document.createElement('div');
           details.appendChild(tableContainer);
   
-          // Only fetch and parse when the details are opened.
+          // Only fetch and parse when details are opened.
           details.addEventListener('toggle', async function() {
             if (details.open && !details.dataset.loaded) {
               try {
                 const response = await fetch(fileUrl);
                 if (response.ok) {
-                  // Get the file as an ArrayBuffer.
                   const arrayBuffer = await response.arrayBuffer();
-                  // Read the XLSX file.
                   const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-                  // Get the first sheet (or specify a sheet name if needed).
                   const firstSheetName = workbook.SheetNames[0];
                   const worksheet = workbook.Sheets[firstSheetName];
-                  // Convert the worksheet to HTML.
                   let htmlString = XLSX.utils.sheet_to_html(worksheet);
-                  // Use a temporary container to adjust the generated HTML.
-                  const tempDiv = document.createElement('div');
-                  tempDiv.innerHTML = htmlString;
-                  // Find the table and add Bootstrap classes for a modern look.
-                  const table = tempDiv.querySelector('table');
-                  if (table) {
-                    table.classList.add('table', 'table-striped', 'table-hover');
-                  }
-                  // Insert the updated HTML into our container.
-                  tableContainer.innerHTML = tempDiv.innerHTML;
-                  // Mark as loaded so that we don't re-fetch on subsequent toggles.
+                  // Apply table styling using our helper function.
+                  htmlString = styleTable(htmlString);
+                  tableContainer.innerHTML = htmlString;
                   details.dataset.loaded = "true";
                 } else {
                   tableContainer.innerHTML = 'Error loading file: ' + response.status;
@@ -198,9 +188,8 @@ function renderGroupedFiles(fileNames, currentPath) {
           li.appendChild(fileContainer);
   
         } else if (groupName === "Condor Club") {
-          // Existing handling for "Condor Club"
+          // Handling for "Condor Club"
           if (lowerName.endsWith('.txt')) {
-            // Render TXT file as a link labeled "Race Results" that opens in a new window.
             const link = document.createElement('a');
             link.href = '#';
             link.textContent = "Race Results";
@@ -232,7 +221,7 @@ function renderGroupedFiles(fileNames, currentPath) {
           img.alt = fileName;
           li.appendChild(img);
         } else {
-          // Render default clickable link for other groups.
+          // Default clickable link for other groups.
           const link = document.createElement('a');
           link.href = '#';
           link.textContent = fileName;
