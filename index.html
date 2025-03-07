@@ -21,11 +21,12 @@
   </style>
   <!-- Include SheetJS from a CDN -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <!-- Include Bootstrap CSS for modern table styling -->
   <link
-  rel="stylesheet"
-  href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
-  integrity="sha384-MegaFBoCHzrYcBuM4soQK3A7+Fq2dl2LkLrIq4sLTvE17rZZz0k5KxH+WbJ8AMwE"
-  crossorigin="anonymous"
+    rel="stylesheet"
+    href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+    integrity="sha384-MegaFBoCHzrYcBuM4soQK3A7+Fq2dl2LkLrIq4sLTvE17rZZz0k5KxH+WbJ8AMwE"
+    crossorigin="anonymous"
   />
 </head>
 <body>
@@ -36,6 +37,7 @@
   <ul id="file-list"></ul>
   <!-- Optionally, a container for file content (if needed) -->
   <div id="file-content"></div>
-  <script src="/script.js"></script>
+  <!-- Load our main script as a module -->
+  <script type="module" src="/script.js"></script>
 </body>
 </html>
