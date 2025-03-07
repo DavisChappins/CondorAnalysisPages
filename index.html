@@ -3,6 +3,8 @@
 <head>
   <meta charset="utf-8">
   <title>Condor Analysis</title>
+  <!-- Tabulator CSS for modern, interactive tables -->
+  <link href="https://unpkg.com/tabulator-tables@5.4.4/dist/css/tabulator.min.css" rel="stylesheet">
   <style>
     /* Simple styling for navigation */
     #navigation a {
@@ -18,6 +20,10 @@
       list-style-type: none;
       margin-left: 20px;
     }
+    /* Optional styling for XLSX table container */
+    #xlsx-table {
+      margin-top: 20px;
+    }
   </style>
 </head>
 <body>
@@ -26,8 +32,15 @@
   <div id="navigation"></div>
   <!-- This will hold our file/folder list -->
   <ul id="file-list"></ul>
-  <!-- Optionally, a container for file content (if needed) -->
+  <!-- Container for file content (if needed) -->
   <div id="file-content"></div>
+  <!-- Container for the XLSX table -->
+  <div id="xlsx-table"></div>
+  <!-- Include SheetJS for XLSX parsing -->
+  <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+  <!-- Include Tabulator for the modern table -->
+  <script src="https://unpkg.com/tabulator-tables@5.4.4/dist/js/tabulator.min.js"></script>
+  <!-- Your application script -->
   <script src="/script.js"></script>
 </body>
 </html>
