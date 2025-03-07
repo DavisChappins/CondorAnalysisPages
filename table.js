@@ -4,24 +4,30 @@ export function styleTable(htmlString) {
   tempDiv.innerHTML = htmlString;
   const table = tempDiv.querySelector('table');
   if (table) {
-    // Apply Bootstrap classes
+    // Apply Bootstrap classes for overall table styling.
     table.classList.add('table', 'table-striped', 'table-hover', 'table-bordered');
-    // Example: set header background and font weight
-    const ths = table.querySelectorAll('th');
-    ths.forEach(th => {
-      th.style.backgroundColor = '#f8f9fa';
-      th.style.fontWeight = 'bold';
+
+    // Process each header cell.
+    const headerCells = table.querySelectorAll('th');
+    headerCells.forEach((th, index) => {
+      // Common header styling.
+      th.style.border = '1px solid #dee2e6';
       th.style.padding = '8px';
+      th.style.textAlign = 'center';
+      
+      if (index === 0) {
+        // First column auto-sizes by preventing wrapping.
+        th.style.whiteSpace = 'nowrap';
+      } else {
+        // Rotate the header text for all columns after the first.
+        th.style.transform = 'rotate(-45deg)';
+        th.style.transformOrigin = 'bottom left';
+        // Increase the height to accommodate rotated text.
+        th.style.height = '80px';
+      }
     });
-    // Example: set cell padding and border color
-    const tds = table.querySelectorAll('td');
-    tds.forEach(td => {
-      td.style.padding = '8px';
-      td.style.borderColor = '#dee2e6';
-    });
-    // You can also adjust column widths manually if needed:
-    // For instance, if you know the desired widths:
-    // table.querySelectorAll('th:nth-child(1)').forEach(th => { th.style.width = '150px'; });
+
+    // Optional: If you want to set column widths explicitly, you can add code here.
   }
   return tempDiv.innerHTML;
 }
