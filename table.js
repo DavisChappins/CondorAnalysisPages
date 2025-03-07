@@ -7,37 +7,41 @@ export function styleTable(htmlString) {
     // Apply Bootstrap classes for overall table styling.
     table.classList.add('table', 'table-striped', 'table-hover', 'table-bordered');
 
-    // Try to get header cells from a <thead>.
+    // Get header cells. Prefer headers in a <thead> if available.
     let headerCells = table.querySelectorAll('thead th');
-    
-    if (headerCells.length === 0) {
-      // Fallback: assume the first row in the table is the header row.
+    if (!headerCells.length) {
+      // Fallback: assume the first row is the header.
       const firstRow = table.querySelector('tr');
       if (firstRow) {
         headerCells = firstRow.querySelectorAll('td, th');
       }
     }
-    
-    headerCells.forEach((cell, index) => {
-      cell.style.border = '1px solid #dee2e6';
-      cell.style.padding = '8px';
-      cell.style.textAlign = 'center';
+
+    // For each header cell, wrap its content in a rotated container.
+    headerCells.forEach(cell => {
+      // Create a wrapper div and move the existing content into it.
+      const innerDiv = document.createElement('div');
+      innerDiv.innerHTML = cell.innerHTML;
       
-      if (index === 0) {
-        // First header cell: prevent wrapping.
-        cell.style.whiteSpace = 'nowrap';
-      } else {
-        // Rotate other header cells by -45°.
-        cell.style.transform = 'rotate(-45deg)';
-        cell.style.transformOrigin = 'bottom left';
-        // Force inline-block display to ensure the transform takes effect.
-        cell.style.display = 'inline-block';
-        // Increase the height to accommodate rotated text.
-        cell.style.height = '80px';
-      }
+      // Apply rotation to the inner container.
+      innerDiv.style.display = 'inline-block';
+      innerDiv.style.transform = 'rotate(-45deg)';
+      innerDiv.style.transformOrigin = 'bottom left';
+      // Adjust padding inside the rotated container to control spacing.
+      innerDiv.style.padding = '2px';
+      
+      // Clear the cell and insert the rotated wrapper.
+      cell.innerHTML = '';
+      cell.appendChild(innerDiv);
+      
+      // Adjust the cell's own styling.
+      cell.style.padding = '2px 8px';   // Adjust vertical/horizontal padding as needed.
+      cell.style.textAlign = 'center';
+      cell.style.verticalAlign = 'bottom';
+      cell.style.border = '1px solid #dee2e6';
     });
 
-    // Also ensure that the first cell in each data row does not wrap.
+    // Ensure that the first cell in each row does not wrap.
     const rows = table.querySelectorAll('tr');
     rows.forEach(row => {
       const firstCell = row.cells[0];
