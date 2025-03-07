@@ -1,7 +1,7 @@
 // Replace with your Worker URL
 const workerUrl = 'https://condor-results-worker.davis-chappins.workers.dev/';
 
-// Function to fetch the list of keys from the KV store.
+// Fetch the list of keys from KV
 async function fetchFileList() {
   try {
     const response = await fetch(workerUrl + '?list=1');
@@ -17,26 +17,49 @@ async function fetchFileList() {
   }
 }
 
-// Render the file list as clickable links.
-async function renderFileList() {
-  const fileListElement = document.getElementById('file-list');
-  const listData = await fetchFileList();
-  if (listData && listData.keys) {
-    listData.keys.forEach(item => {
-      const li = document.createElement('li');
+// Build a nested tree structure from the flat keys
+function buildFileTree(keys) {
+  const tree = {};
+  keys.forEach(item => {
+    // Split the key on "/" to get folders and file name
+    const parts = item.name.split('/');
+    let current = tree;
+    parts.forEach((part, index) => {
+      // If we're at the last part, it's a file; otherwise, it's a folder
+      if (index === parts.length - 1) {
+        current[part] = null;  // Mark as file (could also store additional info here)
+      } else {
+        if (!current[part]) {
+          current[part] = {};
+        }
+        current = current[part];
+      }
+    });
+  });
+  return tree;
+}
+
+// Render the tree as nested lists
+function renderTree(tree, container, prefix = '') {
+  Object.keys(tree).forEach(key => {
+    const fullPath = prefix ? `${prefix}/${key}` : key;
+    const li = document.createElement('li');
+
+    if (tree[key] === null) {
+      // This is a file; create a clickable link.
       const link = document.createElement('a');
       link.href = '#';
-      link.textContent = item.name;
+      link.textContent = key;
       link.addEventListener('click', async (e) => {
         e.preventDefault();
-        const fileUrl = workerUrl + '?file=' + encodeURIComponent(item.name);
-        const lowerName = item.name.toLowerCase();
-        
+        const lowerName = key.toLowerCase();
+        const fileUrl = workerUrl + '?file=' + encodeURIComponent(fullPath);
+
         if (lowerName.endsWith('.html')) {
-          // Open HTML files in a new tab
+          // Open HTML files in a new tab/window.
           window.open(fileUrl, '_blank');
         } else if (lowerName.endsWith('.csv') || lowerName.endsWith('.xlsx') || lowerName.endsWith('.zip')) {
-          // For CSV, XLSX, or ZIP files, fetch as a blob and trigger a download.
+          // For downloads, fetch as blob and trigger download.
           try {
             const fileResponse = await fetch(fileUrl);
             if (fileResponse.ok) {
@@ -44,7 +67,7 @@ async function renderFileList() {
               const downloadUrl = URL.createObjectURL(blob);
               const a = document.createElement('a');
               a.href = downloadUrl;
-              a.download = item.name;
+              a.download = key;
               document.body.appendChild(a);
               a.click();
               a.remove();
@@ -56,7 +79,7 @@ async function renderFileList() {
             console.error('Fetch error:', err);
           }
         } else {
-          // For other file types, display the file content below the list.
+          // For other file types, display content below the list.
           try {
             const fileResponse = await fetch(fileUrl);
             if (fileResponse.ok) {
@@ -71,11 +94,30 @@ async function renderFileList() {
         }
       });
       li.appendChild(link);
-      fileListElement.appendChild(li);
-    });
+    } else {
+      // This is a folder; display as a folder header and render its contents.
+      const span = document.createElement('span');
+      span.textContent = key;
+      li.appendChild(span);
+      
+      const ul = document.createElement('ul');
+      renderTree(tree[key], ul, fullPath);
+      li.appendChild(ul);
+    }
+    container.appendChild(li);
+  });
+}
+
+// Fetch, build the tree, and render it
+async function renderFileTree() {
+  const fileListElement = document.getElementById('file-list');
+  const listData = await fetchFileList();
+  if (listData && listData.keys) {
+    const tree = buildFileTree(listData.keys);
+    renderTree(tree, fileListElement);
   } else {
     fileListElement.innerHTML = '<li>No files found.</li>';
   }
 }
 
-renderFileList();
+renderFileTree();
