@@ -52,92 +52,80 @@ function getSubtree(tree, pathParts) {
   return subtree;
 }
 
-// Group files into custom categories based on file name patterns.
-function groupFiles(fileNames) {
-  // Define groups including one for images.
-  const groups = {
-    "Summary xlsx": [],
-    "Thermal & Glide html": [],
-    "Download IGCs": [],
-    "Simplified Summaries": [],
-    "Images": [],
-    "Other": []
-  };
-
-  fileNames.forEach(fileName => {
-    if (typeof fileName !== 'string' || fileName.trim() === '') {
-      console.error('Invalid file name:', fileName);
-      return;
-    }
-    
-    const lowerName = fileName.toLowerCase();
-    let grouped = false;
-
-    if (lowerName.endsWith('.xlsx')) {
-      groups["Summary xlsx"].push(fileName);
-      grouped = true;
-    } else if (lowerName.endsWith('.html')) {
-      // Group specific HTML files into "Thermal & Glide html"
-      if (lowerName.includes('summaryclimb_interactive') || lowerName.includes('groundspeed_vs_percent_time_spent')) {
-        groups["Thermal & Glide html"].push(fileName);
-        grouped = true;
-      }
-    } else if (lowerName.endsWith('.zip')) {
-      groups["Download IGCs"].push(fileName);
-      grouped = true;
-    } else if (lowerName.endsWith('.csv')) {
-      if (lowerName.includes('slim_summary')) {
-        groups["Simplified Summaries"].push(fileName);
-        grouped = true;
-      }
-    } else if (lowerName.endsWith('.jpg') || lowerName.endsWith('.jpeg') || lowerName.endsWith('.png')) {
-      groups["Images"].push(fileName);
-      grouped = true;
-    }
-    
-    if (!grouped) {
-      groups["Other"].push(fileName);
-    }
-  });
-  return groups;
-}
-
-
-
-// Render a group of files under a heading.
 function renderGroupedFiles(fileNames, currentPath) {
   const groups = groupFiles(fileNames);
   const container = document.createElement('div');
-
-  Object.keys(groups).forEach(groupName => {
-    if (groups[groupName].length > 0) {
-      // Use <h3> for group headings.
+  
+  // Define the desired order of groups.
+  const groupOrder = [
+    "Summary xlsx",
+    "Thermal & Glide html",
+    "Download IGCs",
+    "Simplified Summaries",
+    "Condor Club",
+    "Images",
+    "Other"
+  ];
+  
+  groupOrder.forEach(groupName => {
+    if (groups[groupName] && groups[groupName].length > 0) {
+      // Use an <h3> heading for the group.
       const heading = document.createElement('h3');
       heading.textContent = groupName;
       container.appendChild(heading);
-
+  
       const ul = document.createElement('ul');
       groups[groupName].forEach(fileName => {
         const li = document.createElement('li');
         const fullPath = currentPath ? `${currentPath}/${fileName}` : fileName;
         const fileUrl = workerUrl + '?file=' + encodeURIComponent(fullPath);
-
-        if (groupName === "Images") {
-          // Automatically render images inline.
+        const lowerName = fileName.toLowerCase();
+  
+        if (groupName === "Condor Club") {
+          if (lowerName.endsWith('.txt')) {
+            // Create a link labeled "Race Results" for the TXT file.
+            const link = document.createElement('a');
+            link.href = '#';
+            link.textContent = "Race Results";
+            link.addEventListener('click', async (e) => {
+              e.preventDefault();
+              try {
+                const response = await fetch(fileUrl);
+                if (response.ok) {
+                  const resultUrl = await response.text();
+                  // Navigate to the URL contained in the text file.
+                  window.location.href = resultUrl;
+                } else {
+                  console.error('Error fetching text file:', response.status);
+                }
+              } catch (err) {
+                console.error('Fetch error:', err);
+              }
+            });
+            li.appendChild(link);
+          } else if (lowerName.endsWith('_task_image.jpg')) {
+            // Render the image inline.
+            const img = document.createElement('img');
+            img.src = fileUrl;
+            img.alt = fileName;
+            img.style.maxWidth = '300px';
+            li.appendChild(img);
+          }
+        } else if (groupName === "Images") {
+          // Render images inline for the "Images" group.
           const img = document.createElement('img');
-          img.src = fileUrl; // Ensure your worker returns the correct Content-Type (e.g. image/jpeg).
+          img.src = fileUrl;
           img.alt = fileName;
-          img.style.maxWidth = '300px';  // Adjust size as needed.
+          img.style.maxWidth = '300px';
           li.appendChild(img);
         } else {
-          // Create clickable link for other file types.
+          // For other groups, create a clickable link.
           const link = document.createElement('a');
           link.href = '#';
           link.textContent = fileName;
           link.addEventListener('click', async (e) => {
             e.preventDefault();
             const lowerName = fileName.toLowerCase();
-            // Use same logic as before for HTML/downloadable files.
             if (lowerName.endsWith('.html')) {
               window.open(fileUrl, '_blank');
             } else if (lowerName.endsWith('.csv') || lowerName.endsWith('.xlsx') || lowerName.endsWith('.zip')) {
@@ -182,6 +170,7 @@ function renderGroupedFiles(fileNames, currentPath) {
   });
   return container;
 }
+
 
 
 // Render the current folder's contents.
