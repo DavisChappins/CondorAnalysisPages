@@ -54,12 +54,13 @@ function getSubtree(tree, pathParts) {
 
 // Group files into custom categories based on file name patterns.
 function groupFiles(fileNames) {
-  // Define your groups, including an "Other" group for files that don't match.
+  // Define groups including one for images.
   const groups = {
     "Summary xlsx": [],
     "Thermal & Glide html": [],
     "Download IGCs": [],
     "Simplified Summaries": [],
+    "Images": [],
     "Other": []
   };
 
@@ -76,7 +77,7 @@ function groupFiles(fileNames) {
       groups["Summary xlsx"].push(fileName);
       grouped = true;
     } else if (lowerName.endsWith('.html')) {
-      // Only group specific HTML files into "Thermal & Glide html"
+      // Group specific HTML files into "Thermal & Glide html"
       if (lowerName.includes('summaryclimb_interactive') || lowerName.includes('groundspeed_vs_percent_time_spent')) {
         groups["Thermal & Glide html"].push(fileName);
         grouped = true;
@@ -89,15 +90,18 @@ function groupFiles(fileNames) {
         groups["Simplified Summaries"].push(fileName);
         grouped = true;
       }
+    } else if (lowerName.endsWith('.jpg') || lowerName.endsWith('.jpeg') || lowerName.endsWith('.png')) {
+      groups["Images"].push(fileName);
+      grouped = true;
     }
     
-    // If the file didn't match any condition, put it into "Other"
     if (!grouped) {
       groups["Other"].push(fileName);
     }
   });
   return groups;
 }
+
 
 
 // Render a group of files under a heading.
@@ -107,7 +111,7 @@ function renderGroupedFiles(fileNames, currentPath) {
 
   Object.keys(groups).forEach(groupName => {
     if (groups[groupName].length > 0) {
-      // Heading for the group.
+      // Use <h3> for group headings.
       const heading = document.createElement('h3');
       heading.textContent = groupName;
       container.appendChild(heading);
@@ -116,50 +120,61 @@ function renderGroupedFiles(fileNames, currentPath) {
       groups[groupName].forEach(fileName => {
         const li = document.createElement('li');
         const fullPath = currentPath ? `${currentPath}/${fileName}` : fileName;
-        const link = document.createElement('a');
-        link.href = '#';
-        link.textContent = fileName;
-        link.addEventListener('click', async (e) => {
-          e.preventDefault();
-          const lowerName = fileName.toLowerCase();
-          const fileUrl = workerUrl + '?file=' + encodeURIComponent(fullPath);
+        const fileUrl = workerUrl + '?file=' + encodeURIComponent(fullPath);
 
-          if (lowerName.endsWith('.html')) {
-            window.open(fileUrl, '_blank');
-          } else if (lowerName.endsWith('.csv') || lowerName.endsWith('.xlsx') || lowerName.endsWith('.zip')) {
-            try {
-              const fileResponse = await fetch(fileUrl);
-              if (fileResponse.ok) {
-                const blob = await fileResponse.blob();
-                const downloadUrl = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = downloadUrl;
-                a.download = fileName;
-                document.body.appendChild(a);
-                a.click();
-                a.remove();
-                URL.revokeObjectURL(downloadUrl);
-              } else {
-                console.error('Error downloading file:', fileResponse.status);
+        if (groupName === "Images") {
+          // Automatically render images inline.
+          const img = document.createElement('img');
+          img.src = fileUrl; // Ensure your worker returns the correct Content-Type (e.g. image/jpeg).
+          img.alt = fileName;
+          img.style.maxWidth = '300px';  // Adjust size as needed.
+          li.appendChild(img);
+        } else {
+          // Create clickable link for other file types.
+          const link = document.createElement('a');
+          link.href = '#';
+          link.textContent = fileName;
+          link.addEventListener('click', async (e) => {
+            e.preventDefault();
+            const lowerName = fileName.toLowerCase();
+            // Use same logic as before for HTML/downloadable files.
+            if (lowerName.endsWith('.html')) {
+              window.open(fileUrl, '_blank');
+            } else if (lowerName.endsWith('.csv') || lowerName.endsWith('.xlsx') || lowerName.endsWith('.zip')) {
+              try {
+                const fileResponse = await fetch(fileUrl);
+                if (fileResponse.ok) {
+                  const blob = await fileResponse.blob();
+                  const downloadUrl = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = downloadUrl;
+                  a.download = fileName;
+                  document.body.appendChild(a);
+                  a.click();
+                  a.remove();
+                  URL.revokeObjectURL(downloadUrl);
+                } else {
+                  console.error('Error downloading file:', fileResponse.status);
+                }
+              } catch (err) {
+                console.error('Fetch error:', err);
               }
-            } catch (err) {
-              console.error('Fetch error:', err);
-            }
-          } else {
-            try {
-              const fileResponse = await fetch(fileUrl);
-              if (fileResponse.ok) {
-                const content = await fileResponse.text();
-                document.getElementById('file-content').innerText = content;
-              } else {
-                document.getElementById('file-content').innerText = 'Error loading file.';
+            } else {
+              try {
+                const fileResponse = await fetch(fileUrl);
+                if (fileResponse.ok) {
+                  const content = await fileResponse.text();
+                  document.getElementById('file-content').innerText = content;
+                } else {
+                  document.getElementById('file-content').innerText = 'Error loading file.';
+                }
+              } catch (err) {
+                console.error('Fetch error:', err);
               }
-            } catch (err) {
-              console.error('Fetch error:', err);
             }
-          }
-        });
-        li.appendChild(link);
+          });
+          li.appendChild(link);
+        }
         ul.appendChild(li);
       });
       container.appendChild(ul);
@@ -167,6 +182,7 @@ function renderGroupedFiles(fileNames, currentPath) {
   });
   return container;
 }
+
 
 // Render the current folder's contents.
 function renderTreeView(subtree, currentPath) {
