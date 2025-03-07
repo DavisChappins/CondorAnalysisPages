@@ -7,29 +7,39 @@ export function styleTable(htmlString) {
     // Apply Bootstrap classes for overall table styling.
     table.classList.add('table', 'table-striped', 'table-hover', 'table-bordered');
 
-    // Process header cells.
-    const headerCells = table.querySelectorAll('th');
-    headerCells.forEach((th, index) => {
-      th.style.border = '1px solid #dee2e6';
-      th.style.padding = '8px';
-      th.style.textAlign = 'center';
+    // Try to get header cells from a <thead>.
+    let headerCells = table.querySelectorAll('thead th');
+    
+    if (headerCells.length === 0) {
+      // Fallback: assume the first row in the table is the header row.
+      const firstRow = table.querySelector('tr');
+      if (firstRow) {
+        headerCells = firstRow.querySelectorAll('td, th');
+      }
+    }
+    
+    headerCells.forEach((cell, index) => {
+      cell.style.border = '1px solid #dee2e6';
+      cell.style.padding = '8px';
+      cell.style.textAlign = 'center';
       
       if (index === 0) {
         // First header cell: prevent wrapping.
-        th.style.whiteSpace = 'nowrap';
+        cell.style.whiteSpace = 'nowrap';
       } else {
-        // Rotate remaining header cells by -45° (counterclockwise).
-        th.style.transform = 'rotate(-45deg)';
-        th.style.transformOrigin = 'bottom left';
-        // Increase height to accommodate rotated text.
-        th.style.height = '80px';
+        // Rotate other header cells by -45°.
+        cell.style.transform = 'rotate(-45deg)';
+        cell.style.transformOrigin = 'bottom left';
+        // Force inline-block display to ensure the transform takes effect.
+        cell.style.display = 'inline-block';
+        // Increase the height to accommodate rotated text.
+        cell.style.height = '80px';
       }
     });
 
-    // Process each row: ensure the first cell doesn't wrap.
+    // Also ensure that the first cell in each data row does not wrap.
     const rows = table.querySelectorAll('tr');
     rows.forEach(row => {
-      // row.cells[0] gets the first cell (either <th> or <td>).
       const firstCell = row.cells[0];
       if (firstCell) {
         firstCell.style.whiteSpace = 'nowrap';
