@@ -1,5 +1,5 @@
 // script.js
-import { styleTable } from './table.js';
+import { styleTable, adjustColumnWidths } from './table.js';
 
 // Replace with your Worker URL
 const workerUrl = 'https://condor-results-worker.davis-chappins.workers.dev/';
@@ -139,10 +139,10 @@ function renderGroupedFiles(fileNames, currentPath) {
   
         // Special handling for "Summary xlsx"
         if (groupName === "Summary xlsx") {
-          // Create a container for both the download link and collapsible preview.
+          // Container for download link and collapsible preview.
           const fileContainer = document.createElement('div');
   
-          // Create a download link using blob-download technique to preserve filename.
+          // Create download link with proper filename.
           const downloadLink = document.createElement('a');
           downloadLink.href = "#";
           downloadLink.textContent = "Download " + fileName;
@@ -156,7 +156,7 @@ function renderGroupedFiles(fileNames, currentPath) {
                 const downloadUrl = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = downloadUrl;
-                a.download = fileName; // Ensure the filename is used
+                a.download = fileName;
                 document.body.appendChild(a);
                 a.click();
                 a.remove();
@@ -170,10 +170,10 @@ function renderGroupedFiles(fileNames, currentPath) {
           });
           fileContainer.appendChild(downloadLink);
   
-          // Create a collapsible container using <details>.
+          // Create collapsible container.
           const details = document.createElement('details');
           const summaryEl = document.createElement('summary');
-          // Change text from "Show Table Preview" to "See Table"
+          // Change text to "See Table"
           summaryEl.textContent = "See Table";
           details.appendChild(summaryEl);
   
@@ -192,9 +192,16 @@ function renderGroupedFiles(fileNames, currentPath) {
                   const firstSheetName = workbook.SheetNames[0];
                   const worksheet = workbook.Sheets[firstSheetName];
                   let htmlString = XLSX.utils.sheet_to_html(worksheet);
-                  // Apply table styling using our helper function.
+                  // Apply table styling.
                   htmlString = styleTable(htmlString);
                   tableContainer.innerHTML = htmlString;
+                  // Wait a tick for rendering, then adjust column widths.
+                  setTimeout(() => {
+                    const table = tableContainer.querySelector('table');
+                    if (table) {
+                      adjustColumnWidths(table);
+                    }
+                  }, 0);
                   details.dataset.loaded = "true";
                 } else {
                   tableContainer.innerHTML = 'Error loading file: ' + response.status;
@@ -209,7 +216,6 @@ function renderGroupedFiles(fileNames, currentPath) {
           li.appendChild(fileContainer);
   
         } else if (groupName === "Condor Club") {
-          // Handling for "Condor Club"
           if (lowerName.endsWith('.txt')) {
             const link = document.createElement('a');
             link.href = '#';
@@ -242,7 +248,7 @@ function renderGroupedFiles(fileNames, currentPath) {
           img.alt = fileName;
           li.appendChild(img);
         } else {
-          // Default clickable link for other groups.
+          // Default link for other groups.
           const link = document.createElement('a');
           link.href = '#';
           link.textContent = fileName;
