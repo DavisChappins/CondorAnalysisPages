@@ -53,13 +53,13 @@ function getSubtree(tree, pathParts) {
   return subtree;
 }
 
-// Group files into custom categories, adding a new "Condor Club" group.
+// Group files into custom categories with new names.
 function groupFiles(fileNames) {
   const groups = {
-    "Summary xlsx": [],
-    "Thermal & Glide html": [],
-    "Download IGCs": [],
+    "Summary": [],
+    "Thermal & Glide Performance": [],
     "Simplified Summaries": [],
+    "Download IGCs": [],
     "Condor Club": [],
     "Images": [],
     "Other": []
@@ -80,11 +80,11 @@ function groupFiles(fileNames) {
       groups["Condor Club"].push(fileName);
       grouped = true;
     } else if (lowerName.endsWith('.xlsx')) {
-      groups["Summary xlsx"].push(fileName);
+      groups["Summary"].push(fileName);
       grouped = true;
     } else if (lowerName.endsWith('.html')) {
       if (lowerName.includes('summaryclimb_interactive') || lowerName.includes('groundspeed_vs_percent_time_spent')) {
-        groups["Thermal & Glide html"].push(fileName);
+        groups["Thermal & Glide Performance"].push(fileName);
         grouped = true;
       }
     } else if (lowerName.endsWith('.zip')) {
@@ -114,10 +114,10 @@ function renderGroupedFiles(fileNames, currentPath) {
   
   // Define the desired order of groups.
   const groupOrder = [
-    "Summary xlsx",
-    "Thermal & Glide html",
-    "Download IGCs",
+    "Summary",
+    "Thermal & Glide Performance",
     "Simplified Summaries",
+    "Download IGCs",
     "Condor Club",
     "Images",
     "Other"
@@ -134,86 +134,27 @@ function renderGroupedFiles(fileNames, currentPath) {
       groups[groupName].forEach(fileName => {
         const li = document.createElement('li');
         const fullPath = currentPath ? `${currentPath}/${fileName}` : fileName;
+        // fileUrl is only used for non-html downloads
         const fileUrl = workerUrl + '?file=' + encodeURIComponent(fullPath);
         const lowerName = fileName.toLowerCase();
   
-        // Special handling for "Summary xlsx"
-        if (groupName === "Summary xlsx") {
-          // Container for download link and collapsible preview.
-          const fileContainer = document.createElement('div');
+        if (groupName === "Summary") {
+          // For Summary, create a link that goes to the summary view.
+          const fileNameWithoutExt = fileName.replace(/\.xlsx$/i, '');
+          const summaryLink = document.createElement('a');
+          const newUrl = (currentPath ? currentPath + '/' : '') + fileNameWithoutExt;
+          summaryLink.href = '/' + newUrl;
+          summaryLink.textContent = fileNameWithoutExt;
+          li.appendChild(summaryLink);
   
-          // Create download link with proper filename.
-          const downloadLink = document.createElement('a');
-          downloadLink.href = "#";
-          downloadLink.textContent = "Download " + fileName;
-          downloadLink.style.marginRight = "10px";
-          downloadLink.addEventListener('click', async function(e) {
-            e.preventDefault();
-            try {
-              const fileResponse = await fetch(fileUrl);
-              if (fileResponse.ok) {
-                const blob = await fileResponse.blob();
-                const downloadUrl = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = downloadUrl;
-                a.download = fileName;
-                document.body.appendChild(a);
-                a.click();
-                a.remove();
-                URL.revokeObjectURL(downloadUrl);
-              } else {
-                console.error('Error downloading file:', fileResponse.status);
-              }
-            } catch (err) {
-              console.error('Fetch error:', err);
-            }
-          });
-          fileContainer.appendChild(downloadLink);
-  
-          // Create collapsible container.
-          const details = document.createElement('details');
-          const summaryEl = document.createElement('summary');
-          // Change text to "See Table"
-          summaryEl.textContent = "See Table";
-          details.appendChild(summaryEl);
-  
-          // Container for the parsed table.
-          const tableContainer = document.createElement('div');
-          details.appendChild(tableContainer);
-  
-          // Only fetch and parse when details are opened.
-          details.addEventListener('toggle', async function() {
-            if (details.open && !details.dataset.loaded) {
-              try {
-                const response = await fetch(fileUrl);
-                if (response.ok) {
-                  const arrayBuffer = await response.arrayBuffer();
-                  const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-                  const firstSheetName = workbook.SheetNames[0];
-                  const worksheet = workbook.Sheets[firstSheetName];
-                  let htmlString = XLSX.utils.sheet_to_html(worksheet);
-                  // Apply table styling.
-                  htmlString = styleTable(htmlString);
-                  tableContainer.innerHTML = htmlString;
-                  // Wait a tick for rendering, then adjust column widths.
-                  setTimeout(() => {
-                    const table = tableContainer.querySelector('table');
-                    if (table) {
-                      adjustColumnWidths(table);
-                    }
-                  }, 0);
-                  details.dataset.loaded = "true";
-                } else {
-                  tableContainer.innerHTML = 'Error loading file: ' + response.status;
-                }
-              } catch (err) {
-                tableContainer.innerHTML = 'Fetch error: ' + err;
-              }
-            }
-          });
-  
-          fileContainer.appendChild(details);
-          li.appendChild(fileContainer);
+        } else if (groupName === "Simplified Summaries") {
+          // For Simplified Summaries, remove the .csv extension and link to a dedicated view.
+          const fileNameWithoutExt = fileName.replace(/\.csv$/i, '');
+          const summaryLink = document.createElement('a');
+          const newUrl = (currentPath ? currentPath + '/' : '') + fileNameWithoutExt;
+          summaryLink.href = '/' + newUrl;
+          summaryLink.textContent = fileNameWithoutExt;
+          li.appendChild(summaryLink);
   
         } else if (groupName === "Condor Club") {
           if (lowerName.endsWith('.txt')) {
@@ -251,11 +192,17 @@ function renderGroupedFiles(fileNames, currentPath) {
           // Default link for other groups.
           const link = document.createElement('a');
           link.href = '#';
-          link.textContent = fileName;
+          // For Thermal & Glide Performance, remove .html from link text.
+          if (groupName === "Thermal & Glide Performance") {
+            link.textContent = fileName.replace(/\.html$/i, '');
+          } else {
+            link.textContent = fileName;
+          }
           link.addEventListener('click', async (e) => {
             e.preventDefault();
             if (lowerName.endsWith('.html')) {
-              window.open(fileUrl, '_blank');
+              // Open locally with consistent URL structure.
+              window.location.href = '/' + fullPath;
             } else if (lowerName.endsWith('.csv') || lowerName.endsWith('.xlsx') || lowerName.endsWith('.zip')) {
               try {
                 const fileResponse = await fetch(fileUrl);
@@ -304,6 +251,11 @@ function renderGroupedFiles(fileNames, currentPath) {
 function renderTreeView(subtree, currentPath) {
   const fileListElement = document.getElementById('file-list');
   fileListElement.innerHTML = '';
+  // Prevent error if subtree is null (i.e. current path points to a file)
+  if (!subtree) {
+    fileListElement.innerHTML = '<li>This is a file view.</li>';
+    return;
+  }
   const keys = Object.keys(subtree);
   const onlyFiles = keys.every(key => subtree[key] === null);
 
@@ -323,7 +275,8 @@ function renderTreeView(subtree, currentPath) {
           const fileUrl = workerUrl + '?file=' + encodeURIComponent(fullPath);
           const lowerName = key.toLowerCase();
           if (lowerName.endsWith('.html')) {
-            window.open(fileUrl, '_blank');
+            // Open locally with consistent URL structure.
+            window.location.href = '/' + fullPath;
           } else if (lowerName.endsWith('.csv') || lowerName.endsWith('.xlsx') || lowerName.endsWith('.zip')) {
             try {
               const fileResponse = await fetch(fileUrl);
@@ -388,6 +341,177 @@ function renderNavigation(currentPathParts) {
   });
 }
 
+// New function: Render summary view for xlsx files.
+async function renderSummaryView() {
+  let currentPath = window.location.pathname;
+  if (currentPath.startsWith('/')) {
+    currentPath = currentPath.substring(1);
+  }
+  const pathParts = currentPath.split('/');
+  const lastPart = pathParts[pathParts.length - 1];
+  if (lastPart && !lastPart.includes('.') && lastPart.endsWith('_summary')) {
+    const fileName = lastPart + '.xlsx';
+    const parentPath = pathParts.slice(0, -1).join('/');
+    const fileUrl = workerUrl + '?file=' + encodeURIComponent(parentPath ? parentPath + '/' + fileName : fileName);
+    renderNavigation(pathParts);
+    const container = document.getElementById('file-content');
+    container.innerHTML = '';
+    const downloadLink = document.createElement('a');
+    downloadLink.href = "#";
+    downloadLink.textContent = "Download " + fileName;
+    downloadLink.style.marginRight = "10px";
+    downloadLink.addEventListener('click', async function(e) {
+      e.preventDefault();
+      try {
+        const fileResponse = await fetch(fileUrl);
+        if (fileResponse.ok) {
+          const blob = await fileResponse.blob();
+          const downloadUrl = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = downloadUrl;
+          a.download = fileName;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          URL.revokeObjectURL(downloadUrl);
+        } else {
+          console.error('Error downloading file:', fileResponse.status);
+        }
+      } catch (err) {
+        console.error('Fetch error:', err);
+      }
+    });
+    container.appendChild(downloadLink);
+    const tableContainer = document.createElement('div');
+    container.appendChild(tableContainer);
+    try {
+      const response = await fetch(fileUrl);
+      if (response.ok) {
+        const arrayBuffer = await response.arrayBuffer();
+        const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+        let htmlString = XLSX.utils.sheet_to_html(worksheet);
+        htmlString = styleTable(htmlString);
+        tableContainer.innerHTML = htmlString;
+        setTimeout(() => {
+          const table = tableContainer.querySelector('table');
+          if (table) {
+            adjustColumnWidths(table);
+          }
+        }, 0);
+      } else {
+        tableContainer.innerHTML = 'Error loading file: ' + response.status;
+      }
+    } catch (err) {
+      tableContainer.innerHTML = 'Fetch error: ' + err;
+    }
+  }
+}
+
+// New function: Render simplified summary view for CSV files.
+async function renderSimplifiedSummaryView() {
+  let currentPath = window.location.pathname;
+  if (currentPath.startsWith('/')) {
+    currentPath = currentPath.substring(1);
+  }
+  const pathParts = currentPath.split('/');
+  const lastPart = pathParts[pathParts.length - 1];
+  console.log("renderSimplifiedSummaryView invoked, lastPart:", lastPart);
+  if (lastPart && !lastPart.includes('.') && lastPart.includes('_slim_summary')) {
+    const fileName = lastPart + '.csv';
+    const parentPath = pathParts.slice(0, -1).join('/');
+    const fileUrl = workerUrl + '?file=' + encodeURIComponent(parentPath ? parentPath + '/' + fileName : fileName);
+    renderNavigation(pathParts);
+    const container = document.getElementById('file-content');
+    container.innerHTML = '';
+    const downloadLink = document.createElement('a');
+    downloadLink.href = "#";
+    downloadLink.textContent = "Download " + fileName;
+    downloadLink.style.marginRight = "10px";
+    downloadLink.addEventListener('click', async function(e) {
+      e.preventDefault();
+      try {
+        const fileResponse = await fetch(fileUrl);
+        if (fileResponse.ok) {
+          const blob = await fileResponse.blob();
+          const downloadUrl = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = downloadUrl;
+          a.download = fileName;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          URL.revokeObjectURL(downloadUrl);
+        } else {
+          console.error('Error downloading file:', fileResponse.status);
+        }
+      } catch (err) {
+        console.error('Fetch error:', err);
+      }
+    });
+    container.appendChild(downloadLink);
+    const tableContainer = document.createElement('div');
+    container.appendChild(tableContainer);
+    try {
+      const response = await fetch(fileUrl);
+      if (response.ok) {
+        const csvText = await response.text();
+        const workbook = XLSX.read(csvText, { type: 'string' });
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+        let htmlString = XLSX.utils.sheet_to_html(worksheet);
+        htmlString = styleTable(htmlString);
+        tableContainer.innerHTML = htmlString;
+        setTimeout(() => {
+          const table = tableContainer.querySelector('table');
+          if (table) {
+            adjustColumnWidths(table);
+          }
+        }, 0);
+      } else {
+        tableContainer.innerHTML = 'Error loading file: ' + response.status;
+      }
+    } catch (err) {
+      tableContainer.innerHTML = 'Fetch error: ' + err;
+    }
+  } else {
+    console.log("Not recognized as simplified summary view:", lastPart);
+  }
+}
+
+// New function: Render HTML file content inside the layout (preserving header and nav).
+async function renderHtmlFileContent(fullPath) {
+  // fullPath is like "US_Soaring/US_Soaring_Q1_2025_(Jan_Feb_Mar)/Competition_day_19/Competition_day_19_groundspeed_vs_percent_time_spent.html"
+  const pathParts = fullPath.split('/');
+  // Do not modify the last segment; use the original pathParts for navigation.
+  renderNavigation(pathParts);
+  
+  // Load the HTML file into the file-content container via an iframe.
+  const container = document.getElementById('file-content');
+  container.innerHTML = '';
+  const fileUrl = workerUrl + '?file=' + encodeURIComponent(fullPath);
+  const iframe = document.createElement('iframe');
+  iframe.src = fileUrl;
+  iframe.style.width = "100%";
+  iframe.style.height = "95vh"; // adjust as needed
+  iframe.style.border = "none";
+  iframe.style.display = "block";
+  iframe.style.margin = "0";
+  container.appendChild(iframe);
+}
+
+// Existing function for non-HTML file view.
+async function renderFileContent(fullPath) {
+  document.body.innerHTML = '';
+  const fileUrl = workerUrl + '?file=' + encodeURIComponent(fullPath);
+  const iframe = document.createElement('iframe');
+  iframe.src = fileUrl;
+  iframe.style.width = "100%";
+  iframe.style.height = "100vh";
+  document.body.appendChild(iframe);
+}
+
 // Main function: fetch keys, build tree, and render view based on URL.
 async function renderFileTree() {
   const listData = await fetchFileList();
@@ -409,4 +533,26 @@ async function renderFileTree() {
   }
 }
 
-document.addEventListener('DOMContentLoaded', renderFileTree);
+document.addEventListener('DOMContentLoaded', async function() {
+  let currentPath = window.location.pathname;
+  if (currentPath.startsWith('/')) {
+    currentPath = currentPath.substring(1);
+  }
+  const pathParts = currentPath.split('/');
+  const lastPart = pathParts[pathParts.length - 1];
+  if (lastPart && lastPart.includes('.')) {
+    if (lastPart.toLowerCase().endsWith('.html')) {
+      await renderHtmlFileContent(currentPath);
+    } else {
+      await renderFileContent(currentPath);
+    }
+  } else {
+    if (lastPart.includes('_slim_summary')) {
+      await renderSimplifiedSummaryView();
+    } else if (lastPart.endsWith('_summary')) {
+      await renderSummaryView();
+    } else {
+      await renderFileTree();
+    }
+  }
+});
