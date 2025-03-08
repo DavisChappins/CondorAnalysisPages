@@ -6,6 +6,10 @@
     "rule4": "Don't do anything where you have to give up rules 1, 2, or 3 to survive (don't put yourself in jail)"
   },
   "columns": {
+    "Name": {
+      "definition": "Name of the pilot",
+      "rule": null
+    },
     "Rule1_glide_avg_gs_kts": {
       "definition": "Groundspeed during glide segments, average",
       "rule": "rule1"
@@ -133,6 +137,14 @@
     "Rule2_time_behind_best_climb_mmss": {
       "definition": "Time lost due to climb rate difference from the best climb rate pilot of the day in mm ss",
       "rule": "rule2"
+    },
+    "Rule2_time_behind_rank1": {
+      "definition": "Time lost due to climb rate difference from the rank 1 pilot",
+      "rule": "rule2"
+    },
+    "Rule3_time_behind_rank1": {
+      "definition": "Time lost due to flying a longer distance compared to the rank 1 pilot",
+      "rule": "rule3"
     },
     "Rule3_absolute_time_lost_mmss": {
       "definition": "Time lost due to flying a longer distance than the task distance in mm ss",
