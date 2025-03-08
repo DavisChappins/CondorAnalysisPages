@@ -405,6 +405,8 @@ async function renderSummaryView() {
     });
     container.appendChild(downloadLink);
     const tableContainer = document.createElement('div');
+    // Add margin for summary view (e.g., 20px gap)
+    tableContainer.style.marginTop = "150px";
     container.appendChild(tableContainer);
     try {
       const response = await fetch(fileUrl);
@@ -474,6 +476,8 @@ async function renderSimplifiedSummaryView() {
     });
     container.appendChild(downloadLink);
     const tableContainer = document.createElement('div');
+    // Add a smaller margin for slim summary view (e.g., 10px gap)
+    tableContainer.style.marginTop = "50px";
     container.appendChild(tableContainer);
     try {
       const response = await fetch(fileUrl);
@@ -501,6 +505,7 @@ async function renderSimplifiedSummaryView() {
     console.log("Not recognized as simplified summary view:", lastPart);
   }
 }
+
 
 // New function: Render HTML file content inside the layout (preserving header and nav).
 async function renderHtmlFileContent(fullPath) {
