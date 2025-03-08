@@ -158,7 +158,7 @@ export function styleTable(htmlString) {
     table.style.fontSize = '0.9rem';
     table.style.borderSpacing = '0';
     table.style.borderCollapse = 'collapse';
-    table.style.marginLeft = '10px'; // Reduced left margin from 20px to 10px
+    table.style.marginLeft = '20px'; // Add left margin to the table
     
     // Add custom CSS for better hover effect and tooltips
     const style = document.createElement('style');
