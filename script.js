@@ -1,5 +1,5 @@
 // script.js
-import { styleTable, adjustColumnWidths } from './table.js';
+import { styleTable, adjustColumnWidths, initializeTooltips } from './table.js';
 
 // Replace with your Worker URL
 const workerUrl = 'https://condor-results-worker.davis-chappins.workers.dev/';
@@ -418,6 +418,12 @@ async function renderSummaryView() {
         let htmlString = XLSX.utils.sheet_to_html(worksheet);
         htmlString = styleTable(htmlString);
         tableContainer.innerHTML = htmlString;
+        // Initialize tooltips as soon as table HTML is added to the DOM
+        initializeTooltips().then(() => {
+          console.log('Tooltips initialized successfully');
+        }).catch(err => {
+          console.error('Error initializing tooltips:', err);
+        });
         setTimeout(() => {
           const table = tableContainer.querySelector('table');
           if (table) {
@@ -489,6 +495,12 @@ async function renderSimplifiedSummaryView() {
         let htmlString = XLSX.utils.sheet_to_html(worksheet);
         htmlString = styleTable(htmlString);
         tableContainer.innerHTML = htmlString;
+        // Initialize tooltips as soon as table HTML is added to the DOM
+        initializeTooltips().then(() => {
+          console.log('Tooltips initialized successfully');
+        }).catch(err => {
+          console.error('Error initializing tooltips:', err);
+        });
         setTimeout(() => {
           const table = tableContainer.querySelector('table');
           if (table) {
