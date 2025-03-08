@@ -89,15 +89,149 @@ function applyConditionalFormattingForColumn(table, headerName, scale = "red_to_
   }
 }
 
+// Global variable to store definitions data
+let definitionsData = null;
+
+// Function to load definitions from JSON file
+async function loadDefinitions() {
+  try {
+    // Use absolute path relative to server root
+    const response = await fetch('/definitions.json');
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    definitionsData = await response.json();
+    console.log('Definitions loaded successfully');
+    return definitionsData;
+  } catch (error) {
+    console.error('Error loading definitions:', error);
+    return null;
+  }
+}
+
+// Load definitions when the script loads
+document.addEventListener('DOMContentLoaded', function() {
+  loadDefinitions();
+});
+
+// Get tooltip content for a header
+function getTooltipContent(headerText) {
+  if (!definitionsData) {
+    console.error('Definitions data not loaded when getting tooltip for:', headerText);
+    return null;
+  }
+  
+  // Clean up header text to match keys in definitions.json
+  const cleanHeader = headerText.trim();
+  console.log('Getting tooltip for header:', cleanHeader);
+  
+  const columnInfo = definitionsData.columns[cleanHeader];
+  if (!columnInfo) {
+    console.warn('No definition found for column:', cleanHeader);
+    // For debugging, list all available keys
+    console.log('Available keys:', Object.keys(definitionsData.columns));
+    return null;
+  }
+  
+  let tooltipContent = `<strong>${cleanHeader}</strong><br>${columnInfo.definition}`;
+  
+  // Add rule information if applicable
+  if (columnInfo.rule && definitionsData.rules[columnInfo.rule]) {
+    const ruleNumber = columnInfo.rule.replace('rule', '');
+    tooltipContent += `<br><br><strong>Rule ${ruleNumber}:</strong> ${definitionsData.rules[columnInfo.rule]}`;
+  }
+  
+  return tooltipContent;
+}
+
 export function styleTable(htmlString) {
   const tempDiv = document.createElement('div');
   tempDiv.innerHTML = htmlString;
   const table = tempDiv.querySelector('table');
   if (table) {
-    // Apply Bootstrap classes for overall styling (including small margins).
+    // Apply Bootstrap classes for overall styling
     table.classList.add('table', 'table-sm', 'table-striped', 'table-hover', 'table-bordered');
-
-    // Get header cells – first try <thead> then fall back to first row.
+    
+    // Set table to have a flexible layout that fits content
+    table.style.tableLayout = 'auto'; 
+    table.style.width = 'max-content';
+    table.style.fontSize = '0.7rem';
+    table.style.borderSpacing = '0';
+    table.style.borderCollapse = 'collapse';
+    table.style.marginLeft = '20px'; // Add left margin to the table
+    
+    // Add custom CSS for better hover effect and tooltips
+    const style = document.createElement('style');
+    style.textContent = `
+      .table-hover tbody tr:hover {
+        background-color: #c2e0ff !important; /* Brighter blue highlight */
+      }
+      .table-striped tbody tr:nth-of-type(odd) {
+        background-color: rgba(0, 0, 0, 0.03); /* Very light grey for striping */
+      }
+      .tooltip-inner {
+        max-width: 300px;
+        text-align: left;
+        padding: 8px;
+      }
+    `;
+    document.head.appendChild(style);
+    
+    // Global style for all table cells
+    const allCells = table.querySelectorAll('td, th');
+    allCells.forEach(cell => {
+      cell.style.padding = '1px 2px'; // Add 1px vertical padding
+      cell.style.verticalAlign = 'middle'; // Consistent vertical alignment
+      cell.style.fontSize = '0.7rem';
+      cell.style.lineHeight = '1'; // Reduce line height to minimize vertical space
+    });
+    
+    // First, adjust the data cells to determine optimal column width
+    const rows = table.querySelectorAll('tr');
+    
+    // Skip header row, style data rows first to establish column widths
+    for (let r = 1; r < rows.length; r++) {
+      const currentRow = rows[r];
+      const firstCell = currentRow.cells[0];
+      if (firstCell) {
+        firstCell.style.whiteSpace = 'nowrap';
+        firstCell.style.textAlign = 'left';
+      }
+      
+      // Apply compact styling to all data cells
+      for (let i = 1; i < currentRow.cells.length; i++) {
+        const cell = currentRow.cells[i];
+        if (cell) {
+          cell.style.whiteSpace = 'nowrap';
+          cell.style.width = 'fit-content';
+          cell.style.minWidth = '36px';
+          cell.style.maxWidth = '50px';
+          
+          // Adjust the content to remove extra space before small numbers
+          const content = cell.textContent.trim();
+          if (!isNaN(parseFloat(content)) && isFinite(content)) {
+            // For numeric content, create a more compact display
+            cell.innerHTML = '';
+            const span = document.createElement('span');
+            span.textContent = content;
+            span.style.display = 'inline-block';
+            
+            // Always right-align all numbers for consistency
+            cell.style.textAlign = 'right';
+            
+            // Adjust padding based on content length - only horizontal padding
+            if (content.length >= 6) {
+              // Larger numbers get a bit more padding
+              cell.style.paddingRight = '3px';
+            }
+            
+            cell.appendChild(span);
+          }
+        }
+      }
+    }
+    
+    // Now handle the header cells
     let headerCells = table.querySelectorAll('thead th');
     if (!headerCells.length) {
       const firstRow = table.querySelector('tr');
@@ -106,29 +240,48 @@ export function styleTable(htmlString) {
       }
     }
 
-    // Wrap each header cell’s content in a rotated container.
-    headerCells.forEach(cell => {
-      const innerDiv = document.createElement('div');
-      innerDiv.innerHTML = cell.innerHTML;
-      innerDiv.style.display = 'inline-block';
-      innerDiv.style.transform = 'rotate(-45deg)';
-      innerDiv.style.transformOrigin = 'bottom left';
-      innerDiv.style.padding = '2px';
-      cell.innerHTML = '';
-      cell.appendChild(innerDiv);
-      cell.style.padding = '2px 8px';
-      cell.style.textAlign = 'center';
-      cell.style.verticalAlign = 'bottom';
-      cell.style.border = '1px solid #dee2e6';
-    });
-
-    // Ensure first column cells (both header and data) do not wrap.
-    const rows = table.querySelectorAll('tr');
-    rows.forEach(row => {
-      const firstCell = row.cells[0];
-      if (firstCell) {
-        firstCell.style.whiteSpace = 'nowrap';
+    // Style headers after data cells so they don't dictate column width
+    headerCells.forEach((cell, index) => {
+      // Store the original text for tooltip
+      const headerText = cell.textContent;
+      
+      // Add tooltip attributes
+      cell.setAttribute('data-toggle', 'tooltip');
+      cell.setAttribute('data-html', 'true');
+      cell.setAttribute('data-original-text', headerText);
+      const tooltipContent = getTooltipContent(headerText);
+      if (tooltipContent) {
+        cell.setAttribute('title', tooltipContent);
       }
+      
+      if (index === 0) {
+        // Don't rotate first column header (Name)
+        cell.style.whiteSpace = 'nowrap';
+        return;
+      }
+      
+      // Use absolute positioning for rotated text to avoid affecting column width
+      const text = cell.textContent;
+      cell.innerHTML = '';
+      cell.style.position = 'relative';
+      cell.style.height = '90px';
+      cell.style.width = '36px';
+      cell.style.maxWidth = '50px';
+      cell.style.overflow = 'visible';
+      
+      const div = document.createElement('div');
+      div.textContent = text;
+      div.style.position = 'absolute';
+      div.style.transformOrigin = 'left bottom';
+      div.style.transform = 'rotate(-45deg)';
+      div.style.whiteSpace = 'nowrap';
+      div.style.fontSize = '0.7rem';
+      div.style.bottom = '2px';
+      div.style.left = '4px';
+      div.style.width = 'auto';
+      div.style.overflow = 'visible';
+      
+      cell.appendChild(div);
     });
 
     // Apply conditional formatting on desired columns.
@@ -145,29 +298,64 @@ export function styleTable(htmlString) {
   return tempDiv.innerHTML;
 }
 
+// Initialize tooltips after table is created
+export async function initializeTooltips() {
+  // Make sure definitions are loaded before initializing tooltips
+  if (!definitionsData) {
+    try {
+      await loadDefinitions();
+    } catch (error) {
+      console.error('Failed to load definitions for tooltips:', error);
+    }
+  }
+
+  // Initialize Bootstrap tooltips
+  if (typeof $ !== 'undefined') {
+    console.log('Initializing tooltips');
+    
+    $('[data-toggle="tooltip"]').each(function() {
+      const headerText = $(this).attr('data-original-text');
+      if (!headerText) {
+        console.warn('Missing data-original-text on tooltip element:', this);
+        return;
+      }
+      
+      const tooltipContent = getTooltipContent(headerText);
+      if (tooltipContent) {
+        $(this).attr('title', tooltipContent);
+        console.log('Added tooltip for:', headerText);
+      } else {
+        console.warn('No definition found for:', headerText);
+      }
+    });
+    
+    // Force destroy any existing tooltips before reinitializing
+    $('[data-toggle="tooltip"]').tooltip('dispose');
+    
+    // Initialize with options
+    $('[data-toggle="tooltip"]').tooltip({
+      html: true,
+      container: 'body',
+      trigger: 'hover',
+      delay: {show: 200, hide: 100},
+      placement: 'top'
+    });
+    
+    console.log('Tooltips initialization complete');
+  } else {
+    console.error('jQuery not available for tooltips initialization');
+  }
+}
+
 export function adjustColumnWidths(table) {
   if (!table) return;
-  // Find the last row in the table.
-  const lastRow = table.querySelector('tr:last-child');
-  if (!lastRow) return;
-  const cells = lastRow.cells;
-  const numCols = cells.length;
-
-  // Create or get a <colgroup> at the top of the table.
+  
+  // Remove existing colgroup to allow auto-sizing
   let colgroup = table.querySelector('colgroup');
-  if (!colgroup) {
-    colgroup = document.createElement('colgroup');
-    table.insertBefore(colgroup, table.firstChild);
+  if (colgroup) {
+    colgroup.remove();
   }
-  colgroup.innerHTML = '';
-
-  // For each column, create a <col> element.
-  for (let i = 0; i < numCols; i++) {
-    const col = document.createElement('col');
-    if (i > 0) { // For columns 2 through n, use the width from the last row cell.
-      const cellWidth = cells[i].offsetWidth;
-      col.style.width = cellWidth + 'px';
-    }
-    colgroup.appendChild(col);
-  }
+  
+  // Add CSS class to ensure the table doesn't expand beyond necessary size
+  table.classList.add('table-responsive-sm');
 }

@@ -1,0 +1,146 @@
+{
+  "rules": {
+    "rule1": "Glide better",
+    "rule2": "Climb better",
+    "rule3": "Fly a shorter distance",
+    "rule4": "Don't do anything where you have to give up rules 1, 2, or 3 to survive (don't put yourself in jail)"
+  },
+  "columns": {
+    "Rule1_glide_avg_gs_kts": {
+      "definition": "Groundspeed during glide segments, average",
+      "rule": "rule1"
+    },
+    "Rule1_glide_avg_ias_kts": {
+      "definition": "Indicated air speed during glide, average",
+      "rule": "rule1"
+    },
+    "Rule1_glide_ratio": {
+      "definition": "L/D for all glide segments, average",
+      "rule": "rule1"
+    },
+    "Rule1_glide_ratio_better_actual_MC": {
+      "definition": "L/D better (or worse) than the polar value at that IAS. Higher is better.",
+      "rule": "rule1"
+    },
+    "Rule1_ideal_MC_ias_given_avg_climb_kts": {
+      "definition": "Based on your avg climb, the IAS that you should have flown to fly at your ideal MC IAS.",
+      "rule": "rule1"
+    },
+    "Rule1_glide_avg_dist_nmi": {
+      "definition": "Distance between climbs, average",
+      "rule": "rule1"
+    },
+    "Rule1_avg_glide_netto_kt": {
+      "definition": "Netto value for all glide segments, average. Higher is better.",
+      "rule": "rule1"
+    },
+    "Rule1_%_of_glide_netto_positive": {
+      "definition": "% of the gliding segments in positive netto",
+      "rule": "rule1"
+    },
+    "Rule1_%_of_glide_sinkrate_positive": {
+      "definition": "% of the gliding segments in positive sinkrate",
+      "rule": "rule1"
+    },
+    "Rule2_avg_climb_rate_kts": {
+      "definition": "Climb rate for all thermals, average",
+      "rule": "rule2"
+    },
+    "Rule2_actual_MC_given_avg_ias_kts": {
+      "definition": "Actual MC IAS flown for all glide segments, average",
+      "rule": "rule2"
+    },
+    "Num_useful_thermals": {
+      "definition": "Number of thermals",
+      "rule": "rule2"
+    },
+    "Num_discarded_thermals_<75s_or_<500ft": {
+      "definition": "Number of discarded thermals less than 75 seconds in duration or less than 500ft gained",
+      "rule": "rule2"
+    },
+    "Percent_discarded_thermals": {
+      "definition": "% of thermals discarded",
+      "rule": "rule2"
+    },
+    "Rule3_total_glide_distance_km": {
+      "definition": "Total gliding distance",
+      "rule": "rule3"
+    },
+    "Rule3_total_glide_more_percent": {
+      "definition": "% of gliding distance more than the task, in %",
+      "rule": "rule3"
+    },
+    "Rule4_avg_altitude_ft": {
+      "definition": "Average altitude for the flight",
+      "rule": "rule4"
+    },
+    "start_speed_gs_kts": {
+      "definition": "Start speed in kts, ground speed",
+      "rule": null
+    },
+    "start_altitude_ft": {
+      "definition": "Start altitude in feet",
+      "rule": null
+    },
+    "finish_speed_gs_kts": {
+      "definition": "Finish speed in kts, ground speed",
+      "rule": null
+    },
+    "finish_altitude_ft": {
+      "definition": "Finish altitude in feet",
+      "rule": null
+    },
+    "task_speed_kmh": {
+      "definition": "Task speed in kmh",
+      "rule": null
+    },
+    "task_distance_km": {
+      "definition": "Task distance in kmh",
+      "rule": null
+    },
+    "task_time_hmmss": {
+      "definition": "Task time in h mm ss",
+      "rule": null
+    },
+    "total_glide_time_mmss": {
+      "definition": "Gliding time in mm ss",
+      "rule": null
+    },
+    "total_thermal_time_mmss": {
+      "definition": "Thermal time in mm ss",
+      "rule": null
+    },
+    "rank": {
+      "definition": "Place in results",
+      "rule": null
+    },
+    "task_time_behind_rank1_mmss": {
+      "definition": "Task time behind rank 1 in mm ss",
+      "rule": null
+    },
+    "Rule1_time_behind_rank1_mmss": {
+      "definition": "A summation of the next two columns in mm ss",
+      "rule": "rule1"
+    },
+    "Rule1_time_behind_rank1_from_gs_mmss": {
+      "definition": "Time lost to glide speed difference in mm ss",
+      "rule": "rule1"
+    },
+    "Rule1_time_behind_rank1_from_ld_mmss": {
+      "definition": "Time lost to L/D difference (in height lost) and time to climb that back in mm ss",
+      "rule": "rule1"
+    },
+    "Rule2_time_behind_best_climb_mmss": {
+      "definition": "Time lost due to climb rate difference from the best climb rate pilot of the day in mm ss",
+      "rule": "rule2"
+    },
+    "Rule3_absolute_time_lost_mmss": {
+      "definition": "Time lost due to flying a longer distance than the task distance in mm ss",
+      "rule": "rule3"
+    },
+    "Rule3_time_behind_straightest_mmss": {
+      "definition": "Time lost due to flying a longer distance behind the shortest flight in mm ss",
+      "rule": "rule3"
+    }
+  }
+}
