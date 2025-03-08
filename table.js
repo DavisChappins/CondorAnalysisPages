@@ -158,7 +158,7 @@ export function styleTable(htmlString) {
     table.style.fontSize = '0.9rem';
     table.style.borderSpacing = '0';
     table.style.borderCollapse = 'collapse';
-    table.style.marginLeft = '10px'; // Reduced left margin from 20px to 10px
+    table.style.marginLeft = '20px'; // Add left margin to the table
     
     // Add custom CSS for better hover effect and tooltips
     const style = document.createElement('style');
@@ -199,7 +199,7 @@ export function styleTable(htmlString) {
     allCells.forEach(cell => {
       cell.style.padding = '1px 5px'; // Increased horizontal padding to 5px
       cell.style.verticalAlign = 'middle';
-      cell.style.fontSize = '0.8rem';
+      cell.style.fontSize = '0.9rem';
       cell.style.lineHeight = '1';
       cell.style.width = 'auto'; // Let content determine width
     });
@@ -304,6 +304,26 @@ export function styleTable(htmlString) {
 
     applyConditionalFormattingForColumn(table, "Deviation Flown (%)", "green_to_red");
     applyConditionalFormattingForColumn(table, "Rule3_total_glide_more_percent", "green_to_red");
+
+    // Format rank column values to display as integers (i.e. without a decimal point)
+    const rankHeaderNames = ['rank', 'nk'];
+    headerCells.forEach((cell, colIndex) => {
+      const headerText = (cell.getAttribute('data-original-text') || cell.textContent).trim().toLowerCase();
+      if (rankHeaderNames.includes(headerText)) {
+        // Found the rank column. Process each data row in that column.
+        for (let r = 1; r < rows.length; r++) {
+          const dataCell = rows[r].cells[colIndex];
+          if (dataCell) {
+            const num = parseFloat(dataCell.textContent);
+            if (!isNaN(num)) {
+              // Set the text content to the integer value (e.g., 1 instead of 1.0)
+              dataCell.textContent = parseInt(num, 10).toString();
+            }
+          }
+        }
+      }
+    });
+    
   }
   return tempDiv.innerHTML;
 }
