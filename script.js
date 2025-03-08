@@ -178,9 +178,29 @@ function renderGroupedFiles(fileNames, currentPath) {
             li.appendChild(link);
             li.appendChild(document.createElement('br'));
           } else if (lowerName.endsWith('_task_image.jpg')) {
+            // Derive the corresponding text file name from the image file name.
+            const textFileName = fileName.split('_task_image')[0] + '.txt';
+            const textFilePath = currentPath ? `${currentPath}/${textFileName}` : textFileName;
+            const textFileUrl = workerUrl + '?file=' + encodeURIComponent(textFilePath);
+            
             const img = document.createElement('img');
-            img.src = fileUrl;
+            img.src = fileUrl; // show the image itself
             img.alt = fileName;
+            img.style.cursor = 'pointer';
+            img.addEventListener('click', async (e) => {
+              e.preventDefault();
+              try {
+                const response = await fetch(textFileUrl);
+                if (response.ok) {
+                  const resultUrl = await response.text();
+                  window.open(resultUrl, '_blank');
+                } else {
+                  console.error('Error fetching text file:', response.status);
+                }
+              } catch (err) {
+                console.error('Fetch error:', err);
+              }
+            });
             li.appendChild(img);
           }
         } else if (groupName === "Images") {
@@ -246,6 +266,8 @@ function renderGroupedFiles(fileNames, currentPath) {
   });
   return container;
 }
+
+
 
 // Render the current folder's contents.
 function renderTreeView(subtree, currentPath) {
