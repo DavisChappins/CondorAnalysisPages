@@ -131,7 +131,7 @@
       "rule": "rule1"
     },
     "Rule1_time_behind_rank1_from_ld_mmss": {
-      "definition": "Time lost to L/D difference (in height lost) and time to climb that back in mm ss",
+      "definition": "Time lost to L/D difference (in height lost) and time to climb back (at avg climb rate) in mm ss",
       "rule": "rule1"
     },
     "Rule2_time_behind_best_climb_mmss": {
@@ -153,6 +153,70 @@
     "Rule3_time_behind_straightest_mmss": {
       "definition": "Time lost due to flying a longer distance behind the shortest flight in mm ss",
       "rule": "rule3"
+    },
+    "Ave Glide IAS (kts)": {
+      "definition": "Indicated air speed during glide, average",
+      "rule": "rule1"
+    },
+    "Glide L/D": {
+      "definition": "L/D for all glide segments, average",
+      "rule": "rule1"
+    },
+    "Avg Glide Dist (nmi)": {
+      "definition": "Distance between climbs, average",
+      "rule": "rule1"
+    },
+    "Avg Netto (kts)": {
+      "definition": "Netto value for all glide segments, average. Higher is better.",
+      "rule": "rule1"
+    },
+    "Avg Climb (kts)": {
+      "definition": "Climb rate for all thermals, average",
+      "rule": "rule2"
+    },
+    "Deviation Flown (%)": {
+      "definition": "% of gliding distance more than the task, in %",
+      "rule": "rule3"
+    },
+    "Avg Alt (ft)": {
+      "definition": "Average altitude for the flight",
+      "rule": "rule4"
+    },
+    "Task Speed (km/h)": {
+      "definition": "Task speed in kmh",
+      "rule": null
+    },
+    "Task Time": {
+      "definition": "Task time in h mm ss",
+      "rule": null
+    },
+    "Gap": {
+      "definition": "Task time behind rank 1 in mm ss",
+      "rule": null
+    },
+    "Glide Gap": {
+      "definition": "A summation of the next two columns in mm ss",
+      "rule": "rule1"
+    },
+	"'-- from Glide Speed": {
+      "definition": "Time lost to glide speed difference in mm ss",
+      "rule": "rule1"
+    },
+    "'-- from Glide L/D": {
+      "definition": "Time lost to L/D difference (in height lost) and time to climb back (at avg climb rate) in mm ss",
+      "rule": "rule1"
+    },
+    "Climb Gap": {
+      "definition": "Time lost due to climb rate difference from the best climb rate pilot of the day in mm ss",
+      "rule": "rule2"
+    },
+    "Deviation Gap": {
+      "definition": "Time lost due to flying a longer distance compared to the rank 1 pilot",
+      "rule": "rule3"
+    },
+    "Rank": {
+      "definition": "Place in results",
+      "rule": null
     }
   }
 }
