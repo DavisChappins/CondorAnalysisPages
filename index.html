@@ -71,5 +71,11 @@
   <div id="file-content"></div>
   <!-- Load our main script as a module -->
   <script type="module" src="/script.js"></script>
+  <script>
+  if (window.location.hostname === 'condoranalysis.pages.dev') {
+    window.location.href = 'https://condoranalysis.com' + window.location.pathname;
+  }
+  </script>
+
 </body>
 </html>
