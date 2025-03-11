@@ -287,7 +287,7 @@ export function styleTable(htmlString) {
       div.style.whiteSpace = 'nowrap';
       div.style.fontSize = '0.9rem';
       div.style.bottom = '2px';
-      div.style.left = '4px';
+      div.style.left = '10px'; // Changed from 4px to 10px for better spacing
       div.style.width = 'auto';
       div.style.overflow = 'visible';
       
@@ -324,6 +324,49 @@ export function styleTable(htmlString) {
       }
     });
     
+    // Remove existing colgroup to allow auto-sizing
+    let colgroup = table.querySelector('colgroup');
+    if (colgroup) {
+      colgroup.remove();
+    }
+    
+    // Add CSS class to ensure the table doesn't expand beyond necessary size
+    table.classList.add('table-responsive-sm');
+
+    // Add column highlighting that preserves the original background colors
+    for (let i = 0; i < table.rows.length; i++) {
+      const row = table.rows[i];
+      for (let j = 0; j < row.cells.length; j++) {
+        const cell = row.cells[j];
+        
+        // Store the original background on mouseover and apply a blue tint
+        cell.setAttribute('onmouseover', `
+          // Store original colors for the column
+          for (let r = 0; r < this.parentNode.parentNode.rows.length; r++) {
+            if (this.parentNode.parentNode.rows[r].cells[${j}]) {
+              const cell = this.parentNode.parentNode.rows[r].cells[${j}];
+              // Only store original color if not already stored
+              if (!cell.hasAttribute('data-original-bg')) {
+                cell.setAttribute('data-original-bg', cell.style.backgroundColor || '');
+              }
+              // Apply a semi-transparent blue tint
+              cell.style.boxShadow = 'inset 0 0 0 1000px rgba(30, 144, 255, 0.3)';
+            }
+          }
+        `);
+        
+        // Restore the original background on mouseout
+        cell.setAttribute('onmouseout', `
+          for (let r = 0; r < this.parentNode.parentNode.rows.length; r++) {
+            if (this.parentNode.parentNode.rows[r].cells[${j}]) {
+              const cell = this.parentNode.parentNode.rows[r].cells[${j}];
+              // Remove the blue tint
+              cell.style.boxShadow = '';
+            }
+          }
+        `);
+      }
+    }
   }
   return tempDiv.innerHTML;
 }
