@@ -289,7 +289,8 @@ export function styleTable(htmlString) {
       div.style.bottom = '2px';
       div.style.left = '10px'; // Changed from 4px to 10px for better spacing
       div.style.width = 'auto';
-      div.style.overflow = 'visible';
+      div.style.overflow = 'visible'; // Allow text to overflow its container
+      div.style.zIndex = '1';         // Ensure it appears above other content
       
       cell.appendChild(div);
     });
@@ -324,15 +325,22 @@ export function styleTable(htmlString) {
       }
     });
     
-    // Remove existing colgroup to allow auto-sizing
-    let colgroup = table.querySelector('colgroup');
-    if (colgroup) {
-      colgroup.remove();
+    // Find the index of the "Name" column first
+    let nameColumnIndex = -1;
+    const headerRow = table.rows[0];
+    for (let i = 0; i < headerRow.cells.length; i++) {
+      const headerText = headerRow.cells[i].textContent.trim().toLowerCase();
+      const origText = headerRow.cells[i].getAttribute('data-original-text');
+      const textToCheck = (origText || headerText).toLowerCase();
+      if (textToCheck === 'name' || textToCheck === 'pilot' || textToCheck === 'competitor') {
+        nameColumnIndex = i;
+        break;
+      }
     }
     
-    // Add CSS class to ensure the table doesn't expand beyond necessary size
-    table.classList.add('table-responsive-sm');
-
+    // Store the final nameColumnIndex value for use in event handlers
+    const finalNameColumnIndex = nameColumnIndex;
+    
     // Add column highlighting that preserves the original background colors
     for (let i = 0; i < table.rows.length; i++) {
       const row = table.rows[i];
@@ -351,6 +359,20 @@ export function styleTable(htmlString) {
               }
               // Apply a semi-transparent blue tint
               cell.style.boxShadow = 'inset 0 0 0 1000px rgba(30, 144, 255, 0.3)';
+              
+              // Make header text bold if this is the header row (r=0)
+              if (r === 0) {
+                // Find the div inside the header cell that contains the text
+                const textDiv = cell.querySelector('div');
+                if (textDiv) {
+                  // Store original font weight
+                  if (!textDiv.hasAttribute('data-original-weight')) {
+                    textDiv.setAttribute('data-original-weight', textDiv.style.fontWeight || 'normal');
+                  }
+                  // Make text bold
+                  textDiv.style.fontWeight = 'bold';
+                }
+              }
             }
           }
         `);
@@ -362,13 +384,62 @@ export function styleTable(htmlString) {
               const cell = this.parentNode.parentNode.rows[r].cells[${j}];
               // Remove the blue tint
               cell.style.boxShadow = '';
+              
+              // Restore the header font weight if this is the header row
+              if (r === 0) {
+                const textDiv = cell.querySelector('div');
+                if (textDiv) {
+                  textDiv.style.fontWeight = textDiv.getAttribute('data-original-weight') || 'normal';
+                }
+              }
             }
           }
         `);
       }
     }
+    
+    // Add row highlighting enhancement (underline text in name column) 
+    if (finalNameColumnIndex !== -1) {
+      for (let i = 1; i < table.rows.length; i++) {
+        const row = table.rows[i];
+        
+        // Add mouseover event to underline name cell when row is hovered
+        row.setAttribute('onmouseover', `
+          // Find the name cell in this row
+          if (this.cells[${finalNameColumnIndex}]) {
+            const nameCell = this.cells[${finalNameColumnIndex}];
+            // Store original text decoration
+            if (!nameCell.hasAttribute('data-original-decoration')) {
+              nameCell.setAttribute('data-original-decoration', nameCell.style.textDecoration || 'none');
+            }
+            // Add underline (doesn't change width)
+            nameCell.style.textDecoration = 'underline';
+          }
+        `);
+        
+        // Add mouseout event to restore normal text decoration
+        row.setAttribute('onmouseout', `
+          // Find the name cell in this row
+          if (this.cells[${finalNameColumnIndex}]) {
+            const nameCell = this.cells[${finalNameColumnIndex}];
+            // Restore original text decoration
+            nameCell.style.textDecoration = nameCell.getAttribute('data-original-decoration') || 'none';
+          }
+        `);
+      }
+    }
+    
+    // Remove existing colgroup to allow auto-sizing
+    let colgroup = table.querySelector('colgroup');
+    if (colgroup) {
+      colgroup.remove();
+    }
+    
+    // Add CSS class to ensure the table doesn't expand beyond necessary size
+    table.classList.add('table-responsive-sm');
+
+    return tempDiv.innerHTML;
   }
-  return tempDiv.innerHTML;
 }
 
 // Initialize tooltips after table is created
