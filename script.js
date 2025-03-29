@@ -346,21 +346,45 @@ function renderTreeView(subtree, currentPath) {
 
 // Render breadcrumb navigation.
 function renderNavigation(currentPathParts) {
-  const nav = document.getElementById('navigation');
-  nav.innerHTML = '';
+  const container = document.getElementById('breadcrumb-container');
+  container.innerHTML = ''; // Clear previous breadcrumb
+
+  // Create a nav element with aria-label for accessibility
+  const navEl = document.createElement('nav');
+  navEl.setAttribute('aria-label', 'breadcrumb');
+
+  // Create the breadcrumb list using Bootstrap classes
+  const ol = document.createElement('ol');
+  ol.className = 'breadcrumb';
+
+  // Home link
+  const liHome = document.createElement('li');
+  liHome.className = 'breadcrumb-item';
   const homeLink = document.createElement('a');
   homeLink.href = '/';
   homeLink.textContent = 'Home';
-  nav.appendChild(homeLink);
+  liHome.appendChild(homeLink);
+  ol.appendChild(liHome);
+
   let pathSoFar = '';
   currentPathParts.forEach((part, index) => {
-    nav.appendChild(document.createTextNode(' / '));
     pathSoFar += (index === 0 ? part : '/' + part);
-    const link = document.createElement('a');
-    link.href = '/' + pathSoFar;
-    link.textContent = part;
-    nav.appendChild(link);
+    const li = document.createElement('li');
+    // Mark the last breadcrumb as active
+    li.className = 'breadcrumb-item' + (index === currentPathParts.length - 1 ? ' active' : '');
+    if (index === currentPathParts.length - 1) {
+      li.textContent = part;
+    } else {
+      const link = document.createElement('a');
+      link.href = '/' + pathSoFar;
+      link.textContent = part;
+      li.appendChild(link);
+    }
+    ol.appendChild(li);
   });
+
+  navEl.appendChild(ol);
+  container.appendChild(navEl);
 }
 
 // New function: Render summary view for xlsx files.
