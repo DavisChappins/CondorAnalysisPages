@@ -346,49 +346,25 @@ function renderTreeView(subtree, currentPath) {
 
 // Render breadcrumb navigation.
 function renderNavigation(currentPathParts) {
-  const container = document.getElementById('breadcrumb-container');
-  if (!container) {
+  const nav = document.getElementById('breadcrumb-container');
+  if (!nav) {
     console.error('Breadcrumb container not found.');
     return;
   }
-  container.innerHTML = ''; // Clear previous breadcrumb
-
-  // Create a nav element with aria-label for accessibility
-  const navEl = document.createElement('nav');
-  navEl.setAttribute('aria-label', 'breadcrumb');
-
-  // Create the breadcrumb list using Bootstrap classes
-  const ol = document.createElement('ol');
-  ol.className = 'breadcrumb';
-
-  // Home link
-  const liHome = document.createElement('li');
-  liHome.className = 'breadcrumb-item';
+  nav.innerHTML = '';
   const homeLink = document.createElement('a');
   homeLink.href = '/';
   homeLink.textContent = 'Home';
-  liHome.appendChild(homeLink);
-  ol.appendChild(liHome);
-
+  nav.appendChild(homeLink);
   let pathSoFar = '';
   currentPathParts.forEach((part, index) => {
+    nav.appendChild(document.createTextNode(' / '));
     pathSoFar += (index === 0 ? part : '/' + part);
-    const li = document.createElement('li');
-    li.className =
-      'breadcrumb-item' + (index === currentPathParts.length - 1 ? ' active' : '');
-    if (index === currentPathParts.length - 1) {
-      li.textContent = part;
-    } else {
-      const link = document.createElement('a');
-      link.href = '/' + pathSoFar;
-      link.textContent = part;
-      li.appendChild(link);
-    }
-    ol.appendChild(li);
+    const link = document.createElement('a');
+    link.href = '/' + pathSoFar;
+    link.textContent = part;
+    nav.appendChild(link);
   });
-
-  navEl.appendChild(ol);
-  container.appendChild(navEl);
 }
 
 
