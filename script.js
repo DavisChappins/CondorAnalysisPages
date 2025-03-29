@@ -346,11 +346,7 @@ function renderTreeView(subtree, currentPath) {
 
 // Render breadcrumb navigation.
 function renderNavigation(currentPathParts) {
-  const nav = document.getElementById('breadcrumb-container');
-  if (!nav) {
-    console.error('Breadcrumb container not found.');
-    return;
-  }
+  const nav = document.getElementById('navigation');
   nav.innerHTML = '';
   const homeLink = document.createElement('a');
   homeLink.href = '/';
@@ -366,7 +362,6 @@ function renderNavigation(currentPathParts) {
     nav.appendChild(link);
   });
 }
-
 
 // New function: Render summary view for xlsx files.
 async function renderSummaryView() {
@@ -547,18 +542,13 @@ async function renderHtmlFileContent(fullPath) {
 
 // Existing function for non-HTML file view.
 async function renderFileContent(fullPath) {
-  const container = document.getElementById('file-content');
-  if (!container) {
-    console.error("File content container not found");
-    return;
-  }
-  container.innerHTML = ''; // Only clear the file content
+  document.body.innerHTML = '';
   const fileUrl = workerUrl + '?file=' + encodeURIComponent(fullPath);
   const iframe = document.createElement('iframe');
   iframe.src = fileUrl;
   iframe.style.width = "100%";
   iframe.style.height = "100vh";
-  container.appendChild(iframe);
+  document.body.appendChild(iframe);
 }
 
 // Main function: fetch keys, build tree, and render view based on URL.
