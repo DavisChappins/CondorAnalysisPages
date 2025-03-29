@@ -347,6 +347,10 @@ function renderTreeView(subtree, currentPath) {
 // Render breadcrumb navigation.
 function renderNavigation(currentPathParts) {
   const container = document.getElementById('breadcrumb-container');
+  if (!container) {
+    console.error('Breadcrumb container not found.');
+    return;
+  }
   container.innerHTML = ''; // Clear previous breadcrumb
 
   // Create a nav element with aria-label for accessibility
@@ -370,8 +374,8 @@ function renderNavigation(currentPathParts) {
   currentPathParts.forEach((part, index) => {
     pathSoFar += (index === 0 ? part : '/' + part);
     const li = document.createElement('li');
-    // Mark the last breadcrumb as active
-    li.className = 'breadcrumb-item' + (index === currentPathParts.length - 1 ? ' active' : '');
+    li.className =
+      'breadcrumb-item' + (index === currentPathParts.length - 1 ? ' active' : '');
     if (index === currentPathParts.length - 1) {
       li.textContent = part;
     } else {
@@ -386,6 +390,7 @@ function renderNavigation(currentPathParts) {
   navEl.appendChild(ol);
   container.appendChild(navEl);
 }
+
 
 // New function: Render summary view for xlsx files.
 async function renderSummaryView() {
@@ -566,13 +571,18 @@ async function renderHtmlFileContent(fullPath) {
 
 // Existing function for non-HTML file view.
 async function renderFileContent(fullPath) {
-  document.body.innerHTML = '';
+  const container = document.getElementById('file-content');
+  if (!container) {
+    console.error("File content container not found");
+    return;
+  }
+  container.innerHTML = ''; // Only clear the file content
   const fileUrl = workerUrl + '?file=' + encodeURIComponent(fullPath);
   const iframe = document.createElement('iframe');
   iframe.src = fileUrl;
   iframe.style.width = "100%";
   iframe.style.height = "100vh";
-  document.body.appendChild(iframe);
+  container.appendChild(iframe);
 }
 
 // Main function: fetch keys, build tree, and render view based on URL.
